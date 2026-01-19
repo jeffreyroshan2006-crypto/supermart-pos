@@ -28,6 +28,7 @@ export interface IStorage {
   // Bills
   createBill(billData: CreateBillRequest, cashierId: number): Promise<Bill>;
   getBills(): Promise<Bill[]>;
+  getBillByPublicId(publicId: string): Promise<{ bill: Bill; items: any[] } | undefined>;
   
   // Stats
   getDailySales(): Promise<{ date: string; amount: number }[]>;
@@ -187,6 +188,26 @@ export class DatabaseStorage implements IStorage {
 
   async getBills(): Promise<Bill[]> {
     return await db.select().from(bills).orderBy(desc(bills.date));
+  }
+
+  async getBillByPublicId(publicId: string): Promise<{ bill: Bill; items: any[] } | undefined> {
+    const [bill] = await db.select().from(bills).where(eq(bills.publicId, publicId));
+    if (!bill) return undefined;
+
+    const items = await db.select({
+      id: billItems.id,
+      billId: billItems.billId,
+      productId: billItems.productId,
+      quantity: billItems.quantity,
+      price: billItems.price,
+      tax: billItems.tax,
+      product: products,
+    })
+    .from(billItems)
+    .innerJoin(products, eq(billItems.productId, products.id))
+    .where(eq(billItems.billId, bill.id));
+
+    return { bill, items };
   }
 
   // Stats

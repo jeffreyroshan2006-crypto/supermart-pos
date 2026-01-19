@@ -96,6 +96,12 @@ export async function registerRoutes(
     res.json(bills);
   });
 
+  app.get(api.bills.getPublic.path, async (req, res) => {
+    const result = await storage.getBillByPublicId(req.params.publicId);
+    if (!result) return res.status(404).json({ message: "Bill not found" });
+    res.json(result);
+  });
+
   // === Stats ===
   app.get(api.stats.dashboard.path, requireAuth, async (req, res) => {
     const dailySales = await storage.getDailySales();

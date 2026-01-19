@@ -156,6 +156,25 @@ export const api = {
         200: z.array(z.custom<typeof bills.$inferSelect>()),
       },
     },
+    getPublic: {
+      method: 'GET' as const,
+      path: '/api/public/bills/:publicId',
+      responses: {
+        200: z.object({
+          bill: z.custom<typeof bills.$inferSelect>(),
+          items: z.array(z.object({
+            id: z.number(),
+            billId: z.number(),
+            productId: z.number(),
+            quantity: z.number(),
+            price: z.string(),
+            tax: z.string(),
+            product: z.custom<typeof products.$inferSelect>(),
+          })),
+        }),
+        404: errorSchemas.notFound,
+      },
+    },
   },
   stats: {
     dashboard: {

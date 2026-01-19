@@ -1,5 +1,5 @@
 import { pgTable, text, serial, integer, boolean, timestamp, numeric, date } from "drizzle-orm/pg-core";
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -52,6 +52,7 @@ export const customers = pgTable("customers", {
 export const bills = pgTable("bills", {
   id: serial("id").primaryKey(),
   billNumber: text("bill_number").notNull().unique(),
+  publicId: text("public_id").notNull().unique().default(sql`gen_random_uuid()`),
   date: timestamp("date").defaultNow(),
   subtotal: numeric("subtotal").notNull(),
   taxTotal: numeric("tax_total").notNull(),
