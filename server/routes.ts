@@ -12,11 +12,19 @@ export async function registerRoutes(
   // Set up Authentication
   setupAuth(app);
 
-  // === Middleware to protect routes ===
   const requireAuth = (req: any, res: any, next: any) => {
     if (req.isAuthenticated()) return next();
     res.status(401).json({ message: "Unauthorized" });
   };
+
+  app.get("/api/health", async (req, res) => {
+    try {
+      await storage.getUser(1); // Simple DB check
+      res.json({ status: "ok", db: "connected" });
+    } catch (err: any) {
+      res.status(500).json({ status: "error", message: err.message });
+    }
+  });
 
   // === Products ===
   app.get(api.products.list.path, requireAuth, async (req, res) => {

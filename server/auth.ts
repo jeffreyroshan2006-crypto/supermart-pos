@@ -97,10 +97,12 @@ export function setupAuth(app: any) {
         return next(err);
       }
       if (!user) {
+        console.error("Login failed:", info.message);
         return res.status(401).json({ message: info.message ?? "Authentication failed" });
       }
       req.logIn(user, (err: any) => {
         if (err) {
+          console.error("Session login error:", err);
           return next(err);
         }
         return res.status(200).json(user);
