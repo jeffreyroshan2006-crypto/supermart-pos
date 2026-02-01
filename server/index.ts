@@ -59,7 +59,7 @@ app.use((req, res, next) => {
   next();
 });
 
-(async () => {
+const startPromise = (async () => {
   await registerRoutes(httpServer, app);
 
   app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
@@ -90,13 +90,19 @@ app.use((req, res, next) => {
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = parseInt(process.env.PORT || "5000", 10);
-  httpServer.listen(
-    {
-      port,
-      host: "0.0.0.0",
-    },
-    () => {
-      log(`serving on port ${port}`);
-    },
-  );
+
+  // Only listen if not running on Vercel
+  if (!process.env.VERCEL) {
+    httpServer.listen(
+      {
+        port,
+        host: "0.0.0.0",
+      },
+      () => {
+        log(`serving on port ${port}`);
+      },
+    );
+  }
 })();
+
+export { app, httpServer, startPromise };
