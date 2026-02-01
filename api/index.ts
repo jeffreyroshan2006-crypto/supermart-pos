@@ -1,5 +1,6 @@
 import express from 'express';
 import { createServer } from 'http';
+import { registerRoutes } from '../server/routes.js';
 
 const app = express();
 app.use(express.json());
@@ -17,7 +18,6 @@ app.use((req, res, next) => {
 
 export default async (req: any, res: any) => {
     try {
-        const { registerRoutes } = await import('../server/routes');
         await registerRoutes(httpServer, app);
         app(req, res);
     } catch (err: any) {
