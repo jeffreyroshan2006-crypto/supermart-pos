@@ -11,12 +11,12 @@ if (!process.env.DATABASE_URL) {
 }
 
 // Configure connection pool for Supabase
-export const pool = new Pool({ 
+export const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
   max: 20, // Maximum number of clients in the pool
   idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
+  connectionTimeoutMillis: 10000, // Increased for serverless stability
 });
 
 export const db = drizzle(pool, { schema });
