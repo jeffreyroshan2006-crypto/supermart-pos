@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { api } from "@shared/routes";
 import { z } from "zod";
 import { setupAuth, hashPassword } from "./auth";
+import { db } from "./db";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -19,10 +20,14 @@ export async function registerRoutes(
 
   app.get("/api/health", async (req, res) => {
     try {
+      if (!db) {
+        throw new Error("Database instance (db) is null. Check environment variables.");
+      }
       await storage.getUser(1); // Simple DB check
       res.json({ status: "ok", db: "connected" });
     } catch (err: any) {
-      res.status(500).json({ status: "error", message: err.message });
+      console.error("Health check failed:", err.message);
+      res.status(500).json({ status: "error", message: err.message, stack: process.env.NODE_ENV === 'development' ? err.stack : undefined });
     }
   });
 

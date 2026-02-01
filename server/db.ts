@@ -5,19 +5,19 @@ import * as schema from "@shared/schema";
 
 const { Pool } = pg;
 
-if (!process.env.DATABASE_URL) {
-  throw new Error(
-    "DATABASE_URL must be set. Did you forget to provision a database?",
-  );
+const url = process.env.SUPABASE_DATABASE_URL || process.env.DATABASE_URL || process.env.DATABASE_POSTGRES_URL;
+
+if (!url) {
+  console.error("CRITICAL ERROR: Database connection string not found. Ensure SUPABASE_DATABASE_URL is set in Vercel.");
 }
 
-// Configure connection pool for Supabase
-export const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-  max: 20, // Maximum number of clients in the pool
+// Configure connection pool for Supabase / Serverless
+export const pool = url ? new Pool({
+  connectionString: url,
+  ssl: { rejectUnauthorized: false }, // Required for Supabase/Neon
+  max: 10,
   idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 10000, // Increased for serverless stability
-});
+  connectionTimeoutMillis: 10000,
+}) : null!;
 
-export const db = drizzle(pool, { schema });
+export const db = pool ? drizzle(pool, { schema }) : null!;
