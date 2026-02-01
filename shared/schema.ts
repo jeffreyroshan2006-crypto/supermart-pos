@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, numeric, date } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, numeric, date, json } from "drizzle-orm/pg-core";
 import { relations, sql } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -61,6 +61,12 @@ export const bills = pgTable("bills", {
   paymentMode: text("payment_mode", { enum: paymentModes }).notNull(),
   customerId: integer("customer_id").references(() => customers.id),
   cashierId: integer("cashier_id").references(() => users.id),
+});
+
+export const sessions = pgTable("session", {
+  sid: text("sid").primaryKey().notNull(),
+  sess: json("sess").notNull(),
+  expire: timestamp("expire", { precision: 6 }).notNull(),
 });
 
 export const billItems = pgTable("bill_items", {
