@@ -10,14 +10,7 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
-  // Set up Authentication
-  setupAuth(app);
-
-  const requireAuth = (req: any, res: any, next: any) => {
-    if (req.isAuthenticated()) return next();
-    res.status(401).json({ message: "Unauthorized" });
-  };
-
+  // === Health Check (Move above Auth to prevent blocking crashes) ===
   app.get("/api/health", async (req, res) => {
     try {
       if (!db) {
@@ -27,9 +20,18 @@ export async function registerRoutes(
       res.json({ status: "ok", db: "connected" });
     } catch (err: any) {
       console.error("Health check failed:", err.message);
-      res.status(500).json({ status: "error", message: err.message, stack: process.env.NODE_ENV === 'development' ? err.stack : undefined });
+      res.status(500).json({ status: "error", message: err.message });
     }
   });
+
+  // Set up Authentication
+  setupAuth(app);
+
+  const requireAuth = (req: any, res: any, next: any) => {
+    if (req.isAuthenticated()) return next();
+    res.status(401).json({ message: "Unauthorized" });
+  };
+
 
   // === Products ===
   app.get(api.products.list.path, requireAuth, async (req, res) => {

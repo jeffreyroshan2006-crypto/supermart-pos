@@ -1,5 +1,4 @@
 import express from 'express';
-import { registerRoutes } from '../server/routes';
 import { createServer } from 'http';
 
 const app = express();
@@ -16,9 +15,17 @@ app.use((req, res, next) => {
     next();
 });
 
-const startPromise = registerRoutes(httpServer, app);
-
 export default async (req: any, res: any) => {
-    await startPromise;
-    app(req, res);
+    try {
+        const { registerRoutes } = await import('../server/routes');
+        await registerRoutes(httpServer, app);
+        app(req, res);
+    } catch (err: any) {
+        console.error("Vercel Entry Point Error:", err);
+        res.status(500).json({
+            error: "Vercel Entry Point Error",
+            message: err.message,
+            stack: err.stack
+        });
+    }
 };

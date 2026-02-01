@@ -12,8 +12,9 @@ import { promisify } from "util";
 
 const scryptAsync = promisify(scrypt);
 
+// Use safer imports for CommonJS modules in ESM
 const PostgresStore = connectPg(session);
-const MemoryStore = MemoryStoreFactory(session);
+const MemoryStore = (MemoryStoreFactory as any)(session);
 
 export function setupAuth(app: any) {
   const sessionStore = pool
