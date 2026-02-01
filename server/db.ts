@@ -8,6 +8,9 @@ const url = process.env.SUPABASE_DATABASE_URL || process.env.DATABASE_URL || pro
 
 if (!url) {
   console.error("CRITICAL ERROR: Database connection string not found. Ensure SUPABASE_DATABASE_URL is set in Vercel.");
+} else {
+  const connectionType = process.env.SUPABASE_DATABASE_URL ? "SUPABASE_DATABASE_URL" : "DATABASE_URL";
+  console.log(`Database source: ${connectionType}`);
 }
 
 // Configure connection pool for Supabase / Serverless
