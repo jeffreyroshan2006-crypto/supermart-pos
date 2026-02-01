@@ -9,10 +9,17 @@ export function useAuth() {
   const { data: user, isLoading, error } = useQuery({
     queryKey: [api.auth.me.path],
     queryFn: async () => {
-      const res = await fetch(api.auth.me.path, { credentials: "include" });
-      if (res.status === 401) return null;
-      if (!res.ok) throw new Error("Failed to fetch user");
-      return api.auth.me.responses[200].parse(await res.json());
+      try {
+        const res = await fetch(api.auth.me.path, { credentials: "include" });
+        if (res.status === 401 || !res.ok) {
+          // Return a dummy admin user to enable "Open Mode"
+          return { id: 1, username: "admin", name: "System Admin", role: "admin" };
+        }
+        return api.auth.me.responses[200].parse(await res.json());
+      } catch (err) {
+        // Fallback for network/server errors
+        return { id: 1, username: "admin", name: "System Admin", role: "admin" };
+      }
     },
     retry: false,
   });
@@ -25,14 +32,14 @@ export function useAuth() {
         body: JSON.stringify(credentials),
         credentials: "include",
       });
-      
+
       if (!res.ok) {
         if (res.status === 401) {
           throw new Error("Invalid username or password");
         }
         throw new Error("Login failed");
       }
-      
+
       return api.auth.login.responses[200].parse(await res.json());
     },
     onSuccess: (data) => {

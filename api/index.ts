@@ -19,8 +19,8 @@ export default async (req: any, res: any) => {
     }
 
     try {
-        // 2. Lazy load the rest of the app
-        const { registerRoutes } = await import('../server/routes.js');
+        // Use plain module path, Vercel/Node will resolve .ts -> .js
+        const { registerRoutes } = await import('../server/routes');
         await registerRoutes(httpServer, app);
         app(req, res);
     } catch (err: any) {
