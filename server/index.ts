@@ -78,9 +78,10 @@ const startPromise = (async () => {
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
   // doesn't interfere with the other routes
-  if (process.env.NODE_ENV === "production") {
+  // On Vercel, static files are handled by vercel.json rewrites, not this server.
+  if (process.env.NODE_ENV === "production" && !process.env.VERCEL) {
     serveStatic(app);
-  } else {
+  } else if (process.env.NODE_ENV !== "production") {
     const { setupVite } = await import("./vite");
     await setupVite(httpServer, app);
   }
