@@ -3,6 +3,7 @@ import { db } from "./db";
 import { eq } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
+import MemoryStoreFactory from "memorystore";
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
 import { pool } from "./db";
@@ -12,15 +13,21 @@ import { promisify } from "util";
 const scryptAsync = promisify(scrypt);
 
 const PostgresStore = connectPg(session);
+const MemoryStore = MemoryStoreFactory(session);
 
 export function setupAuth(app: any) {
+  const sessionStore = pool
+    ? new PostgresStore({ pool, createTableIfMissing: true })
+    : new MemoryStore({ checkPeriod: 86400000 }); // fallback
+
   const sessionSettings: session.SessionOptions = {
-    store: new PostgresStore({ pool, createTableIfMissing: true }),
-    secret: process.env.SESSION_SECRET || "super secret session key",
+    store: sessionStore,
+    secret: process.env.SESSION_SECRET || "super-retail-billflow-secret-key-2024",
     resave: false,
     saveUninitialized: false,
     cookie: {
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+      secure: app.get("env") === "production",
     },
   };
 
