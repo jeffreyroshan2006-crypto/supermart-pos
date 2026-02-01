@@ -21,7 +21,7 @@ export async function registerRoutes(
   // === Products ===
   app.get(api.products.list.path, requireAuth, async (req, res) => {
     const products = await storage.getProducts(
-      req.query.search as any, 
+      req.query.search as any,
       req.query.category as any
     );
     res.json(products);
@@ -55,7 +55,8 @@ export async function registerRoutes(
       if (e instanceof z.ZodError) {
         return res.status(400).json({ message: e.errors[0].message });
       }
-throw e;    }
+      throw e;
+    }
   });
 
   app.delete(api.products.delete.path, requireAuth, async (req, res) => {
@@ -96,7 +97,7 @@ throw e;    }
   });
 
   app.get(api.bills.getPublic.path, async (req, res) => {
-    const result = await storage.getBillByPublicId(req.params.publicId);
+    const result = await storage.getBillByPublicId(req.params.publicId as string);
     if (!result) return res.status(404).json({ message: "Bill not found" });
     res.json(result);
   });
@@ -106,7 +107,7 @@ throw e;    }
     const dailySales = await storage.getDailySales();
     const topProducts = await storage.getTopProducts();
     const lowStock = await storage.getLowStockProducts();
-    
+
     res.json({
       dailySales,
       topProducts,
@@ -115,7 +116,10 @@ throw e;    }
   });
 
   // === Seed Data ===
-  await seed();
+  // Attempt to seed, but don't block/crash if DB is temporarily unreachable
+  seed().catch(err => {
+    console.error("Failed to seed database on startup (non-fatal):", err.message);
+  });
 
   return httpServer;
 }

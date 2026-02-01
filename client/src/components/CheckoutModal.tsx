@@ -1,10 +1,12 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { paymentModes, type Bill } from "@shared/schema";
+import { api, buildUrl } from "@shared/routes";
 import { Loader2, CreditCard, Banknote, Smartphone, Wallet, CheckCircle2, MessageSquare, Share2 } from "lucide-react";
 
 interface CheckoutModalProps {
@@ -36,17 +38,36 @@ export function CheckoutModal({ isOpen, onClose, onConfirm, totalAmount, isProce
     }
   };
 
+  const generateBillText = () => {
+    if (!lastCreatedBill) return "";
+
+    // Smartly determine the base URL:
+    // 1. If we have a configured public URL (e.g. env var), use it.
+    // 2. If current host is localhost, try to suggesting the Network IP for better sharing.
+    // 3. Fallback to window.location.origin.
+
+    let baseUrl = window.location.origin;
+
+    // If running on localhost, substitute with the known Network IP for sharing
+    // This allows the user to click 'share' from localhost and still send a working link to others on Wi-Fi
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      // Using the detected IP address
+      baseUrl = `http://10.196.188.90:3000`;
+    }
+
+    const url = `${baseUrl}/public/bill/${lastCreatedBill.publicId}`;
+    return `Hi! Here is your bill from SuperMart POS: ${url}. Total Amount: ₹${lastCreatedBill.grandTotal}. Thank you for shopping with us!`;
+  };
+
   const shareViaWhatsApp = () => {
     if (!lastCreatedBill) return;
-    const url = `${window.location.origin}/public/bill/${lastCreatedBill.publicId}`;
-    const text = `Hi! Here is your bill from SuperMart POS: ${url}. Total Amount: ₹${lastCreatedBill.grandTotal}. Thank you for shopping with us!`;
+    const text = generateBillText();
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
   };
 
   const shareViaSMS = () => {
     if (!lastCreatedBill) return;
-    const url = `${window.location.origin}/public/bill/${lastCreatedBill.publicId}`;
-    const text = `SuperMart POS Bill: ${url}. Total: ₹${lastCreatedBill.grandTotal}`;
+    const text = generateBillText();
     window.open(`sms:?body=${encodeURIComponent(text)}`);
   };
 
@@ -94,7 +115,7 @@ export function CheckoutModal({ isOpen, onClose, onConfirm, totalAmount, isProce
             Confirm the payment details to finalize the bill.
           </DialogDescription>
         </DialogHeader>
-        
+
         <div className="grid gap-6 py-4">
           <div className="space-y-2">
             <Label>Bill Total</Label>
@@ -106,15 +127,15 @@ export function CheckoutModal({ isOpen, onClose, onConfirm, totalAmount, isProce
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Discount Amount (₹)</Label>
-              <Input 
-                type="number" 
+              <Input
+                type="number"
                 min="0"
-                value={discount} 
+                value={discount}
                 onChange={(e) => setDiscount(Number(e.target.value))}
                 className="font-mono"
               />
             </div>
-            
+
             <div className="space-y-2">
               <Label>Final Amount</Label>
               <div className="h-10 px-3 py-2 rounded-md bg-muted font-mono font-semibold flex items-center">
@@ -125,8 +146,8 @@ export function CheckoutModal({ isOpen, onClose, onConfirm, totalAmount, isProce
 
           <div className="space-y-2">
             <Label>Payment Method</Label>
-            <Select 
-              value={paymentMode} 
+            <Select
+              value={paymentMode}
               onValueChange={(val: any) => setPaymentMode(val)}
             >
               <SelectTrigger>

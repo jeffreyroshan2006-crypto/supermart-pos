@@ -45,7 +45,19 @@ export function setupAuth(app: any) {
           return done(null, false, { message: "Incorrect username." });
         }
 
+        // Check if password has the expected format (salt:key)
+        if (!user.password || !user.password.includes(':')) {
+          console.error('Invalid password format for user:', username);
+          return done(null, false, { message: "Invalid password format. Please contact administrator." });
+        }
+
         const [salt, key] = user.password.split(":");
+
+        if (!salt || !key) {
+          console.error('Password missing salt or key for user:', username);
+          return done(null, false, { message: "Invalid password format. Please contact administrator." });
+        }
+
         const hashedBuffer = (await scryptAsync(password, salt, 64)) as Buffer;
 
         const keyBuffer = Buffer.from(key, "hex");
