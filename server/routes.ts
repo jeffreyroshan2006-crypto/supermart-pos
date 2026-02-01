@@ -27,9 +27,9 @@ export async function registerRoutes(
   // Set up Authentication
   setupAuth(app);
 
+  // No-op requireAuth to make site "open" as requested
   const requireAuth = (req: any, res: any, next: any) => {
-    if (req.isAuthenticated()) return next();
-    res.status(401).json({ message: "Unauthorized" });
+    return next();
   };
 
 
@@ -99,7 +99,8 @@ export async function registerRoutes(
   app.post(api.bills.create.path, requireAuth, async (req, res) => {
     try {
       const input = api.bills.create.input.parse(req.body);
-      const bill = await storage.createBill(input, (req.user as any).id);
+      const cashierId = (req.user as any)?.id || 1; // Default to admin if not logged in
+      const bill = await storage.createBill(input, cashierId);
       res.status(201).json(bill);
     } catch (e: any) {
       res.status(400).json({ message: e.message || "Error processing bill" });
