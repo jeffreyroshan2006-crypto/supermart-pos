@@ -1,10 +1,10 @@
-import { 
+import {
   users, products, customers, bills, billItems, suppliers,
   type User, type InsertUser, type Product, type InsertProduct,
   type Customer, type InsertCustomer, type Bill, type InsertBill,
   type BillItem, type InsertBillItem, type Supplier, type InsertSupplier,
   type CreateBillRequest
-} from "@shared/schema";
+} from "../shared/schema";
 import { db } from "./db";
 import { eq, like, desc, sql, lt, and } from "drizzle-orm";
 
@@ -13,23 +13,23 @@ export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
-  
+
   // Products
   getProducts(search?: string, category?: string): Promise<Product[]>;
   getProduct(id: number): Promise<Product | undefined>;
   createProduct(insertProduct: InsertProduct): Promise<Product>;
   updateProduct(id: number, product: Partial<InsertProduct>): Promise<Product>;
   deleteProduct(id: number): Promise<void>;
-  
+
   // Customers
   getCustomers(search?: string): Promise<Customer[]>;
   createCustomer(customer: InsertCustomer): Promise<Customer>;
-  
+
   // Bills
   createBill(billData: CreateBillRequest, cashierId: number): Promise<Bill>;
   getBills(): Promise<Bill[]>;
   getBillByPublicId(publicId: string): Promise<{ bill: Bill; items: any[] } | undefined>;
-  
+
   // Stats
   getDailySales(): Promise<{ date: string; amount: number }[]>;
   getTopProducts(): Promise<{ name: string; quantity: number }[]>;
@@ -56,7 +56,7 @@ export class DatabaseStorage implements IStorage {
   // Products
   async getProducts(search?: string, category?: string): Promise<Product[]> {
     let query = db.select().from(products);
-    
+
     const filters = [];
     if (search) {
       filters.push(like(products.name, `%${search}%`));
@@ -64,12 +64,12 @@ export class DatabaseStorage implements IStorage {
     if (category) {
       filters.push(eq(products.category, category));
     }
-    
+
     if (filters.length > 0) {
       // @ts-ignore - AND logic is simple enough here
       return await query.where(and(...filters));
     }
-    
+
     return await query;
   }
 
@@ -203,9 +203,9 @@ export class DatabaseStorage implements IStorage {
       tax: billItems.tax,
       product: products,
     })
-    .from(billItems)
-    .innerJoin(products, eq(billItems.productId, products.id))
-    .where(eq(billItems.billId, bill.id));
+      .from(billItems)
+      .innerJoin(products, eq(billItems.productId, products.id))
+      .where(eq(billItems.billId, bill.id));
 
     return { bill, items };
   }
