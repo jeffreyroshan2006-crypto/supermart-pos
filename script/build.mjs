@@ -1,7 +1,7 @@
-// Build script - Uses npx to ensure esbuild is available
+// Build script - Uses esbuild from devDependencies
 import { build as viteBuild } from "vite";
-import { rm, readFile } from "fs/promises";
-import { execSync } from "child_process";
+import { rm } from "fs/promises";
+import { build as esbuild } from "esbuild";
 
 // server deps to bundle
 const allowlist = [
@@ -27,19 +27,24 @@ async function buildAll() {
   await viteBuild();
 
   console.log("building server...");
-  const pkg = JSON.parse(await readFile("package.json", "utf-8"));
+  
+  const pkg = await import("../package.json", { assert: { type: "json" } });
   const allDeps = [
-    ...Object.keys(pkg.dependencies || {}),
-    ...Object.keys(pkg.devDependencies || {}),
+    ...Object.keys(pkg.default.dependencies || {}),
+    ...Object.keys(pkg.default.devDependencies || {}),
   ];
   const externals = allDeps.filter((dep) => !allowlist.includes(dep));
 
-  // Use npx to run esbuild
-  const externalArgs = externals.map(e => `--external:${e}`).join(' ');
-  const command = `npx esbuild server/index.ts --platform=node --bundle --format=cjs --outfile=dist/index.cjs --minify ${externalArgs}`;
-  
-  console.log("Running:", command);
-  execSync(command, { stdio: 'inherit' });
+  await esbuild({
+    entryPoints: ["server/index.ts"],
+    platform: "node",
+    bundle: true,
+    format: "cjs",
+    outfile: "dist/index.cjs",
+    minify: true,
+    external: externals,
+    logLevel: "info",
+  });
   
   console.log("build complete!");
 }
