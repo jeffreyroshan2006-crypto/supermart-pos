@@ -1,70 +1,123 @@
-# ReadyBasket POS - World-Class Retail Billing System
+# 🇮🇳 SuperMart POS - World-Class Indian Retail Billing System
 
 <p align="center">
-  <img src="./attached_assets/generated_images/modern_retail_pos_logo_for_supermart.png" alt="ReadyBasket Logo" width="120" />
+  <img src="./attached_assets/generated_images/modern_retail_pos_logo_for_supermart.png" alt="SuperMart POS Logo" width="150" />
 </p>
 
 <p align="center">
-  <b>A modern, beautiful, and powerful Point of Sale system for retail businesses</b>
+  <b>A comprehensive, GST-compliant Point of Sale system designed for Indian retailers</b>
 </p>
 
 <p align="center">
   <a href="#features">Features</a> •
+  <a href="#indian-specific">Made for India</a> •
   <a href="#quick-start">Quick Start</a> •
-  <a href="#deployment">Deployment</a> •
-  <a href="#architecture">Architecture</a>
+  <a href="#deployment">Deployment</a>
 </p>
 
 ---
 
 ## ✨ Features
 
-### Core POS Features
-- **⚡ Lightning-fast billing** - Keyboard-friendly, barcode-ready, minimal clicks
-- **🛒 Smart cart** - Real-time calculations, item-level discounts, tax handling
-- **💳 Multiple payment modes** - Cash, UPI, Card, Wallet, Split payments
+### 🏪 Core POS Features
+- **⚡ Lightning-fast billing** - Keyboard shortcuts, barcode scanning, minimal clicks
+- **🛒 Smart cart with real-time GST** - Automatic CGST, SGST, IGST calculations
+- **💳 Multiple payment modes** - Cash, UPI, Credit/Debit Card, Digital Wallets, Split payments
 - **⏸️ Hold/Resume bills** - Handle multiple customers simultaneously
-- **🎁 Discounts & Offers** - Percentage, fixed amount, Buy X Get Y
+- **🎁 Advanced discounts** - Item-level & bill-level discounts, percentage & fixed amount
 - **🏷️ Barcode scanning** - Works with any USB barcode scanner
+- **📱 UPI QR Code** - Generate UPI QR codes for payments
+- **🧾 Thermal printer support** - 58mm & 80mm receipt printers
 
-### Inventory Management
-- **📦 Product catalog** - SKU, barcode, categories, brands
-- **📊 Stock tracking** - Real-time inventory with low-stock alerts
-- **📝 Purchase orders** - Track orders from suppliers
-- **🔧 Stock adjustments** - Damage, expiry, corrections
-- **📈 Reorder points** - Never run out of stock
+### 💰 GST & Taxation
+- **✅ GST Compliant** - Full support for CGST, SGST, IGST
+- **📊 GST Rates** - 0%, 5%, 12%, 18%, 28% auto-applied based on HSN codes
+- **🧾 GST Reports** - Monthly/quarterly GST filing reports
+- **🏷️ HSN Codes** - Pre-configured for all products
+- **📄 Tax Invoices** - GST-compliant bill format with QR code
+- **📈 GST Analytics** - Track input/output tax
 
-### Multi-Store Support
-- **🏪 Multiple locations** - Manage multiple stores from one dashboard
-- **👥 Role-based access** - Admin, Manager, Cashier roles
-- **📍 Store switching** - Easy switch between stores
-- **📊 Store-wise reports** - Compare performance across locations
+### 📦 Inventory Management
+- **📊 Real-time stock tracking** - Automatic stock deduction on sales
+- **⚠️ Low stock alerts** - Never run out of popular items
+- **📝 Purchase orders** - Manage supplier orders
+- **🔧 Stock adjustments** - Handle damage, expiry, returns
+- **📦 Multi-unit support** - KG, Gram, Litre, Piece, Pack, etc.
+- **🏷️ Barcode management** - SKU and barcode support
+- **📈 Inventory reports** - Track stock movement
 
-### Indian Retail Ready
-- **💰 GST compliant** - CGST, SGST, IGST calculations
-- **🏷️ MRP support** - Maximum Retail Price display
-- **📱 UPI payments** - Native QR code support
-- **🧾 GST reports** - Monthly filing reports
-
-### Customer Management
-- **👤 Customer database** - Phone-based lookup
+### 👥 Customer Management
+- **📱 Phone-based lookup** - Quick customer search
 - **🎁 Loyalty program** - Points per purchase, redemption
-- **📧 GST invoicing** - GSTIN support for B2B
-- **📱 SMS/WhatsApp** - Share bills instantly
+- **💳 Credit management** - Track customer credits
+- **📧 GST Invoicing** - GSTIN support for B2B customers
+- **📊 Purchase history** - View customer buying patterns
+- **🎂 Birthday offers** - Special discounts on birthdays
 
-### Reporting & Analytics
-- **📊 Sales dashboard** - Daily, weekly, monthly trends
-- **🏆 Top products** - Best-selling items
-- **📈 Category analysis** - Performance by category
-- **💵 Payment summary** - Cash flow tracking
-- **🧾 GST summaries** - Tax filing made easy
+### 🏪 Multi-Store Support
+- **🏢 Organization management** - Manage multiple businesses
+- **🏪 Store management** - Multiple locations per organization
+- **👥 Role-based access** - Admin, Manager, Cashier roles
+- **📊 Cross-store reports** - Compare store performance
+- **🔄 Inter-store transfers** - Move stock between stores
 
-### Modern UI/UX
-- **🎨 Glassmorphism design** - Beautiful frosted glass effects
-- **🌓 Dark mode** - Easy on the eyes during long shifts
-- **📱 Responsive** - Works on desktop and tablet
+### 📊 Reports & Analytics
+- **📈 Sales reports** - Daily, weekly, monthly, yearly
+- **🏆 Top products** - Best-selling items analysis
+- **💰 Profit analysis** - Margin reports by product/category
+- **📊 GST summary** - Tax filing made easy
+- **👥 Customer analytics** - Buying patterns & loyalty
+- **📦 Inventory reports** - Stock valuation & movement
+- **💵 Cash flow** - Track all payments
+
+### 🎨 Modern UI/UX
+- **🌓 Glassmorphism design** - Beautiful frosted glass effects
+- **🎨 Dark mode support** - Easy on eyes during long shifts
+- **📱 Responsive design** - Works on desktop & tablet
 - **⌨️ Keyboard shortcuts** - Power user friendly
-- **🔄 Offline support** - Cart syncs when back online
+- **🔄 Offline support** - Cart saves locally
+- **🎯 Quick actions** - Fast access to common tasks
+
+---
+
+## 🇮🇳 Made for India
+
+### Indian Product Catalog
+✅ **500+ Indian products** pre-loaded:
+- 🍚 Rice & Grains - India Gate, Daawat, Aashirvaad
+- 🥛 Dairy - Amul, Mother Dairy, Nestle
+- 🌶️ Spices - MDH, Everest, Catch
+- 🛢️ Oil & Ghee - Fortune, Saffola, Amul
+- 🧴 Personal Care - Dove, Himalaya, Dabur
+- 🍪 Snacks - Lay's, Haldiram, Britannia
+- 🧃 Beverages - Tata Tea, Nescafe, Coca-Cola
+- 🏠 Household - Surf Excel, Vim, Harpic
+- 👶 Baby Care - Pampers, Johnson's, Cerelac
+- 📱 Electronics - Batteries, Chargers, LED Bulbs
+- ✏️ Stationery - Classmate, Reynolds, Cello
+
+### Indian Taxation
+✅ **GST Ready**:
+- CGST, SGST, IGST auto-calculation
+- HSN codes for all products
+- GST invoice format
+- Monthly GST reports
+- GSTR-1 ready
+
+### Indian Payment Methods
+✅ **Multiple payment options**:
+- 💵 Cash
+- 📱 UPI (PhonePe, GPay, Paytm)
+- 💳 Credit/Debit Cards
+- 👛 Digital Wallets
+- 💰 Split payments
+
+### Indian Number Format
+✅ **Indian numbering system**:
+- ₹ Indian Rupee symbol
+- Lakhs & Crores formatting
+- Amount in words (Rupees & Paise)
+- Indian date format (DD/MM/YYYY)
 
 ---
 
@@ -78,8 +131,8 @@
 
 ```bash
 # Clone the repository
-git clone https://github.com/jeffreyroshan2006-crypto/Retail-BillFlow.git
-cd Retail-BillFlow
+git clone https://github.com/jeffreyroshan2006-crypto/supermart-pos.git
+cd supermart-pos
 
 # Install dependencies
 npm install
@@ -91,7 +144,7 @@ cp .env.example .env
 # Run database migrations
 npm run db:push
 
-# Seed initial data
+# Seed the database with Indian products
 npm run db:seed
 
 # Start development server
@@ -99,145 +152,88 @@ npm run dev
 ```
 
 **Default login:**
-- Username: `admin`
+- Email: `admin@supermart.in`
 - Password: `admin123`
 
-Visit `http://localhost:5000` to access the application.
+Visit `http://localhost:5000`
 
 ---
 
 ## 🌐 Deployment
 
-### ⚠️ Important: Cannot Use GitHub Pages
+### Recommended: Deploy to Vercel
 
-**GitHub Pages only supports static websites.** This app requires:
-- Backend server (Express.js) ❌
-- Database (PostgreSQL) ❌
-- Environment variables ❌
+1. **Go to [vercel.com](https://vercel.com)**
+2. Click **"Add New Project"**
+3. Import your GitHub repository
+4. Add environment variables:
+   - `DATABASE_URL` - Your PostgreSQL connection string
+   - `SESSION_SECRET` - Random string (generate with `openssl rand -base64 32`)
+   - `NODE_ENV` - `production`
+5. Click **Deploy**
 
-**[Read more about GitHub Pages limitations](./GITHUB_PAGES_WARNING.md)**
+That's it! Vercel will auto-deploy on every push.
 
-### ✅ Recommended: Deploy to Vercel + Supabase
+### Alternative: Self-Hosting
 
-1. **Create Supabase project**
-   - Go to [supabase.com](https://supabase.com)
-   - Create new project
-   - Copy database connection string
-
-2. **Set up environment variables**
-   ```env
-   DATABASE_URL=postgresql://...
-   SESSION_SECRET=your-secret-key
-   ```
-
-3. **Deploy to Vercel**
-   - Go to [vercel.com](https://vercel.com)
-   - Import your GitHub repo: `jeffreyroshan2006-crypto/supermart-pos`
-   - Add environment variables
-   - Deploy!
-
-📖 **[Complete Deployment Guide](./DEPLOYMENT.md)**
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed deployment instructions.
 
 ---
 
-## 🏗️ Architecture
+## 📊 System Architecture
 
 ### Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
-| **Frontend** | React 18, TypeScript, Tailwind CSS |
-| **UI Components** | shadcn/ui, Radix UI |
+| **Frontend** | React 18, TypeScript, Tailwind CSS, shadcn/ui |
 | **State Management** | TanStack Query (React Query) |
 | **Backend** | Express.js, Node.js |
 | **Database** | PostgreSQL |
 | **ORM** | Drizzle ORM |
-| **Auth** | Passport.js |
+| **Auth** | Passport.js with sessions |
 | **Validation** | Zod |
 
 ### Database Schema
 
-The system uses a comprehensive multi-tenant schema:
+- **26 tables** with comprehensive relationships
+- **Multi-tenant** architecture
+- **Role-based access** control
+- **Audit logging** for all actions
 
-- **Organizations** - Multi-tenant isolation
-- **Stores** - Multiple locations per organization
-- **Users** - Role-based authentication
-- **Products** - Inventory with stock tracking
-- **Customers** - CRM with loyalty
-- **Bills** - Transactions with GST
-- **Purchase Orders** - Supplier management
-- **Stock Adjustments** - Inventory corrections
-
-📊 **[View Complete Schema](./migrations/0001_readybasket_complete_schema.sql)**
-
-### Folder Structure
-
-```
-Retail-BillFlow/
-├── client/                 # Frontend React app
-│   ├── src/
-│   │   ├── components/    # UI components
-│   │   │   ├── pos/      # POS-specific components
-│   │   │   └── ui/       # shadcn/ui components
-│   │   ├── hooks/        # Custom React hooks
-│   │   ├── pages/        # Page components
-│   │   └── lib/          # Utilities
-├── server/               # Backend Express app
-│   ├── routes/          # API routes
-│   ├── storage/         # Database operations
-│   └── auth.ts          # Authentication
-├── shared/              # Shared types and schemas
-│   └── schema.ts        # Database schema + Zod types
-└── migrations/          # SQL migrations
-```
+See [schema documentation](./migrations/0001_readybasket_complete_schema.sql)
 
 ---
 
 ## 🎯 Key Features Explained
 
-### Glassmorphism Design
-
-The UI features modern glassmorphism with:
-- Semi-transparent backgrounds
-- Backdrop blur effects
-- Gradient accents
-- Smooth shadows
-- Dark mode support
-
-### Multi-Store Architecture
-
-Each organization can have multiple stores:
+### GST Calculation Example
 ```typescript
-Organization
-├── Store 1 (Main Branch)
-│   ├── Products
-│   ├── Bills
-│   └── Customers
-├── Store 2 (Branch 2)
-│   ├── Products
-│   ├── Bills
-│   └── Customers
+// For intra-state (same state) - CGST + SGST
+Product: ₹1000
+GST Rate: 18%
+CGST (9%): ₹90
+SGST (9%): ₹90
+Total: ₹1180
+
+// For inter-state (different state) - IGST
+Product: ₹1000
+GST Rate: 18%
+IGST (18%): ₹180
+Total: ₹1180
 ```
 
-### GST Calculation (India)
-
-Automatic GST calculation with:
-```typescript
-// CGST + SGST for intra-state
-const cgst = taxableAmount * (gstRate / 2) / 100;
-const sgst = taxableAmount * (gstRate / 2) / 100;
-
-// IGST for inter-state
-const igst = taxableAmount * gstRate / 100;
-```
+### Loyalty Program
+- Earn 1 point per ₹1 spent
+- Redeem points at ₹1 per point
+- Automatic point calculation
+- Customer tier management
 
 ### Barcode Scanning
-
-Works with any USB/HID barcode scanner:
-- No special drivers needed
-- Scanner acts as keyboard input
+- Works with any USB barcode scanner
 - Automatic product lookup
 - Sound feedback on scan
+- Support for multiple barcode formats
 
 ---
 
@@ -246,49 +242,41 @@ Works with any USB/HID barcode scanner:
 ### Phase 1: Core POS ✅
 - [x] Product management
 - [x] Cart & checkout
-- [x] Barcode scanning
 - [x] GST calculations
+- [x] Barcode scanning
 - [x] Multi-payment support
+- [x] 500+ Indian products
 
 ### Phase 2: Inventory ✅
 - [x] Purchase orders
 - [x] Stock adjustments
 - [x] Low stock alerts
 - [x] Supplier management
+- [x] Multi-unit support
 
 ### Phase 3: Advanced Features ✅
 - [x] Multi-store support
 - [x] Role-based access
 - [x] Loyalty program
-- [x] Offer engine
-- [x] Activity logs
+- [x] GST reports
+- [x] Customer analytics
 
-### Phase 4: Analytics & Reports (In Progress)
-- [x] Sales dashboard
-- [x] Top products
+### Phase 4: Coming Soon
+- [ ] Mobile app for customers
+- [ ] Online ordering
+- [ ] SMS/WhatsApp integration
 - [ ] Advanced analytics
-- [ ] Predictive inventory
-- [ ] Customer insights
-
-### Phase 5: Integrations (Planned)
-- [ ] Payment gateway integration
-- [ ] SMS/WhatsApp APIs
-- [ ] Accounting software sync
-- [ ] E-commerce integration
+- [ ] AI-based recommendations
+- [ ] Multi-language support
 
 ---
 
 ## 📚 Documentation
 
-- **[Deployment Guide](./DEPLOYMENT.md)** - Complete deployment instructions
-- **[API Routes](./server/routes-v2.ts)** - API endpoints
-- **[Database Schema](./migrations/0001_readybasket_complete_schema.sql)** - SQL schema
-
----
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](./LICENSE) file for details.
+- **[DEPLOYMENT.md](./DEPLOYMENT.md)** - Complete deployment guide
+- **[VERCEL_SETUP_GUIDE.md](./VERCEL_SETUP_GUIDE.md)** - Vercel deployment steps
+- **[GITHUB_PAGES_WARNING.md](./GITHUB_PAGES_WARNING.md)** - Why not to use GitHub Pages
+- **[IMPLEMENTATION_SUMMARY.md](./IMPLEMENTATION_SUMMARY.md)** - Technical details
 
 ---
 
@@ -301,19 +289,16 @@ This project is licensed under the MIT License - see the [LICENSE](./LICENSE) fi
 
 ---
 
-## 💬 Support
+## 📄 License
 
-Need help? We're here for you!
-
-- 🐛 Issues: [GitHub Issues](https://github.com/jeffreyroshan2006-crypto/Retail-BillFlow/issues)
-- 💬 Discussions: [GitHub Discussions](https://github.com/jeffreyroshan2006-crypto/Retail-BillFlow/discussions)
+MIT License - See [LICENSE](./LICENSE) file for details.
 
 ---
 
 <p align="center">
-  <b>Built with ❤️ for retailers everywhere</b>
+  <b>Made with ❤️ for Indian retailers</b>
 </p>
 
 <p align="center">
-  ReadyBasket POS © 2024
+  SuperMart POS © 2024 | Made in India 🇮🇳
 </p>
