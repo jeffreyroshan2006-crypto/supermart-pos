@@ -10,7 +10,7 @@ import {
   InsertProduct, InsertCustomer, InsertPurchaseOrder, InsertStockAdjustment,
   InsertBill, CreateBillRequest,
 } from "../shared/schema";
-import { eq, and, like, desc, asc, gte, lte, sql, inArray } from "drizzle-orm";
+import { eq, and, or, lt, like, desc, asc, gte, lte, sql, inArray } from "drizzle-orm";
 
 // ============================================
 // ORGANIZATION OPERATIONS
@@ -32,12 +32,12 @@ export async function getOrganization(id: number) {
 
 export async function createStore(data: InsertStore) {
   const [store] = await db.insert(stores).values(data).returning();
-  
+
   // Create default settings for the store
   await db.insert(storeSettings).values({
     storeId: store.id,
   });
-  
+
   return store;
 }
 
@@ -55,7 +55,7 @@ export async function getUserStores(userId: number) {
     .select({ storeId: userStores.storeId, isDefault: userStores.isDefault })
     .from(userStores)
     .where(eq(userStores.userId, userId));
-  
+
   if (userStoreRelations.length === 0) {
     // Return all stores from user's organization
     const userData = await getUser(userId);
@@ -64,7 +64,7 @@ export async function getUserStores(userId: number) {
     }
     return [];
   }
-  
+
   const storeIds = userStoreRelations.map(r => r.storeId);
   return db.select().from(stores).where(inArray(stores.id, storeIds));
 }
@@ -187,8 +187,8 @@ export async function getProductsByStore(
   storeId: number,
   filters?: { search?: string; category?: number; brand?: number; lowStock?: boolean }
 ) {
-  let query = db.select().from(products).where(eq(products.storeId, storeId));
-  
+  let query = db.select().from(products).where(eq(products.storeId, storeId)).$dynamic();
+
   if (filters?.search) {
     query = query.where(
       or(
@@ -198,19 +198,19 @@ export async function getProductsByStore(
       )
     );
   }
-  
+
   if (filters?.category) {
     query = query.where(eq(products.categoryId, filters.category));
   }
-  
+
   if (filters?.brand) {
     query = query.where(eq(products.brandId, filters.brand));
   }
-  
+
   if (filters?.lowStock) {
     query = query.where(sql`${products.stockQuantity} <= ${products.minStockLevel}`);
   }
-  
+
   return query.orderBy(asc(products.name));
 }
 
@@ -251,7 +251,7 @@ export async function searchProductByBarcode(barcode: string, storeId: number) {
 export async function updateProduct(id: number, data: Partial<InsertProduct>) {
   const [product] = await db
     .update(products)
-    .set({ ...data, updatedAt: new Date() })
+    .set({ ...data, updatedAt: sql`now()` })
     .where(eq(products.id, id))
     .returning();
   return product;
@@ -279,8 +279,8 @@ export async function getCustomersByOrganization(
   organizationId: number,
   filters?: { search?: string; storeId?: number }
 ) {
-  let query = db.select().from(customers).where(eq(customers.organizationId, organizationId));
-  
+  let query = db.select().from(customers).where(eq(customers.organizationId, organizationId)).$dynamic();
+
   if (filters?.search) {
     query = query.where(
       or(
@@ -290,11 +290,11 @@ export async function getCustomersByOrganization(
       )
     );
   }
-  
+
   if (filters?.storeId) {
     query = query.where(eq(customers.storeId, filters.storeId));
   }
-  
+
   return query.orderBy(asc(customers.name));
 }
 
@@ -317,7 +317,7 @@ export async function searchCustomers(query: string, organizationId: number) {
 export async function updateCustomer(id: number, data: Partial<InsertCustomer>) {
   const [customer] = await db
     .update(customers)
-    .set({ ...data, updatedAt: new Date() })
+    .set({ ...data, updatedAt: sql`now()` })
     .where(eq(customers.id, id))
     .returning();
   return customer;
@@ -335,40 +335,41 @@ export async function createBill(data: CreateBillRequest & { organizationId: num
     let taxTotal = 0;
     let cgstTotal = 0;
     let sgstTotal = 0;
-    
+
     // Validate stock and calculate
     for (const item of data.items) {
       const product = await tx.select().from(products).where(eq(products.id, item.productId)).limit(1);
       if (!product[0]) throw new Error(`Product ${item.productId} not found`);
-      
+
       const productData = product[0];
       if (productData.isTrackInventory && Number(productData.stockQuantity) < item.quantity) {
         if (!productData.allowNegativeStock) {
           throw new Error(`Insufficient stock for ${productData.name}`);
         }
       }
-      
+
       const itemTotal = item.price * item.quantity;
       const discountAmount = (itemTotal * (item.discountPercent || 0)) / 100;
       const taxableAmount = itemTotal - discountAmount;
       const gstRate = Number(productData.gstRate || 0);
       const taxAmount = (taxableAmount * gstRate) / 100;
-      
+
       subtotal += itemTotal;
       taxTotal += taxAmount;
       cgstTotal += taxAmount / 2;
       sgstTotal += taxAmount / 2;
     }
-    
+
     const itemDiscountTotal = data.items.reduce((sum, item) => {
       const itemTotal = item.price * item.quantity;
       return sum + (itemTotal * (item.discountPercent || 0)) / 100;
     }, 0);
-    
+
     const grandTotal = subtotal - itemDiscountTotal - (data.billDiscountAmount || 0) + taxTotal;
-    
+
     // Create bill
     const [bill] = await tx.insert(bills).values({
+      billNumber: `BILL-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
       organizationId: data.organizationId,
       storeId: data.storeId,
       cashierId: data.cashierId,
@@ -389,18 +390,18 @@ export async function createBill(data: CreateBillRequest & { organizationId: num
       status: 'completed',
       completedAt: new Date(),
     }).returning();
-    
+
     // Create bill items
     for (const item of data.items) {
       const product = await tx.select().from(products).where(eq(products.id, item.productId)).limit(1);
       const productData = product[0];
-      
+
       const itemTotal = item.price * item.quantity;
       const discountAmount = (itemTotal * (item.discountPercent || 0)) / 100;
       const taxableAmount = itemTotal - discountAmount;
       const gstRate = Number(productData.gstRate || 0);
       const taxAmount = (taxableAmount * gstRate) / 100;
-      
+
       await tx.insert(billItems).values({
         billId: bill.id,
         productId: item.productId,
@@ -419,18 +420,18 @@ export async function createBill(data: CreateBillRequest & { organizationId: num
         sgstAmount: (taxAmount / 2).toString(),
         totalAmount: (taxableAmount + taxAmount).toString(),
       });
-      
+
       // Update stock
       if (productData.isTrackInventory) {
         await tx
           .update(products)
-          .set({ 
-            stockQuantity: sql`${products.stockQuantity} - ${item.quantity}` 
+          .set({
+            stockQuantity: sql`${products.stockQuantity} - ${item.quantity}`
           })
           .where(eq(products.id, item.productId));
       }
     }
-    
+
     // Create payments
     if (data.payments && data.payments.length > 0) {
       for (const payment of data.payments) {
@@ -442,7 +443,7 @@ export async function createBill(data: CreateBillRequest & { organizationId: num
         });
       }
     }
-    
+
     // Update customer loyalty and purchase stats
     if (data.customerId) {
       await tx
@@ -454,7 +455,7 @@ export async function createBill(data: CreateBillRequest & { organizationId: num
         })
         .where(eq(customers.id, data.customerId));
     }
-    
+
     return bill;
   });
 }
@@ -462,10 +463,10 @@ export async function createBill(data: CreateBillRequest & { organizationId: num
 export async function getBillWithItems(id: number) {
   const [bill] = await db.select().from(bills).where(eq(bills.id, id));
   if (!bill) return null;
-  
+
   const items = await db.select().from(billItems).where(eq(billItems.billId, id));
   const payments = await db.select().from(billPayments).where(eq(billPayments.billId, id));
-  
+
   return { ...bill, items, payments };
 }
 
@@ -473,24 +474,24 @@ export async function getBillsByOrganization(
   organizationId: number,
   filters?: { storeId?: number; startDate?: string; endDate?: string; status?: string; limit?: number; offset?: number }
 ) {
-  let query = db.select().from(bills).where(eq(bills.organizationId, organizationId));
-  
+  let query = db.select().from(bills).where(eq(bills.organizationId, organizationId)).$dynamic();
+
   if (filters?.storeId) {
     query = query.where(eq(bills.storeId, filters.storeId));
   }
-  
+
   if (filters?.status) {
     query = query.where(eq(bills.status, filters.status as any));
   }
-  
+
   if (filters?.startDate) {
     query = query.where(gte(bills.billDate, new Date(filters.startDate)));
   }
-  
+
   if (filters?.endDate) {
     query = query.where(lte(bills.billDate, new Date(filters.endDate)));
   }
-  
+
   return query
     .orderBy(desc(bills.billDate))
     .limit(filters?.limit || 50)
@@ -502,7 +503,7 @@ export async function cancelBill(id: number, cancelledBy: number, reason?: strin
     .update(bills)
     .set({
       status: 'cancelled',
-      cancelledAt: new Date(),
+      cancelledAt: sql`now()`,
       cancelledBy,
       cancellationReason: reason,
     })
@@ -514,7 +515,7 @@ export async function cancelBill(id: number, cancelledBy: number, reason?: strin
 export async function getBillByPublicId(publicId: string) {
   const [bill] = await db.select().from(bills).where(eq(bills.publicId, publicId));
   if (!bill) return null;
-  
+
   const items = await db.select().from(billItems).where(eq(billItems.billId, bill.id));
   return { ...bill, items };
 }
@@ -687,10 +688,10 @@ export async function receivePurchaseOrder(id: number, items: { productId: numbe
     // Update order status
     const [order] = await tx
       .update(purchaseOrders)
-      .set({ status: 'received', receivedDate: new Date() })
+      .set({ status: 'received', receivedDate: sql`now()` })
       .where(eq(purchaseOrders.id, id))
       .returning();
-    
+
     // Update stock
     for (const item of items) {
       await tx
@@ -700,7 +701,7 @@ export async function receivePurchaseOrder(id: number, items: { productId: numbe
         })
         .where(eq(products.id, item.productId));
     }
-    
+
     return order;
   });
 }
@@ -713,7 +714,7 @@ export async function createStockAdjustment(data: InsertStockAdjustment) {
   return await db.transaction(async (tx) => {
     // Create adjustment record
     const [adjustment] = await tx.insert(stockAdjustments).values(data).returning();
-    
+
     // Update product stock
     await tx
       .update(products)
@@ -721,7 +722,7 @@ export async function createStockAdjustment(data: InsertStockAdjustment) {
         stockQuantity: sql`${products.stockQuantity} + ${data.quantity}`,
       })
       .where(eq(products.id, data.productId));
-    
+
     return adjustment;
   });
 }
@@ -734,7 +735,4 @@ export async function getStockAdjustmentsByStore(storeId: number) {
     .orderBy(desc(stockAdjustments.createdAt));
 }
 
-// Helper function
-function or(...conditions: any[]) {
-  return sql`(${conditions.join(' OR ')})`;
-}
+// End of file

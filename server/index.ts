@@ -1,5 +1,5 @@
 import express, { type Request, Response, NextFunction } from "express";
-import { registerRoutes } from "./routes";
+import { registerRoutesV2 } from "./routes-v2";
 import { serveStatic } from "./static";
 import { createServer } from "http";
 
@@ -60,7 +60,7 @@ app.use((req, res, next) => {
 });
 
 const startPromise = (async () => {
-  await registerRoutes(httpServer, app);
+  await registerRoutesV2(app);
 
   app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
