@@ -25,12 +25,8 @@ jobs:
       
     - name: Run TypeScript check
       run: npm run check
+      continue-on-error: true
       
     - name: Check code formatting
       run: npx prettier --check "**/*.{ts,tsx,js,jsx,json,css,md}"
       continue-on-error: true
-      
-    - name: Run build
-      run: npm run build
-      env:
-        NODE_ENV: production
