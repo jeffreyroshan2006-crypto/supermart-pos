@@ -108,7 +108,16 @@ Visit `http://localhost:5000` to access the application.
 
 ## 🌐 Deployment
 
-### Deploy to Vercel + Supabase
+### ⚠️ Important: Cannot Use GitHub Pages
+
+**GitHub Pages only supports static websites.** This app requires:
+- Backend server (Express.js) ❌
+- Database (PostgreSQL) ❌
+- Environment variables ❌
+
+**[Read more about GitHub Pages limitations](./GITHUB_PAGES_WARNING.md)**
+
+### ✅ Recommended: Deploy to Vercel + Supabase
 
 1. **Create Supabase project**
    - Go to [supabase.com](https://supabase.com)
@@ -122,7 +131,8 @@ Visit `http://localhost:5000` to access the application.
    ```
 
 3. **Deploy to Vercel**
-   - Import your GitHub repo
+   - Go to [vercel.com](https://vercel.com)
+   - Import your GitHub repo: `jeffreyroshan2006-crypto/supermart-pos`
    - Add environment variables
    - Deploy!
 
