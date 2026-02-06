@@ -1,32 +1,21 @@
-// Build script - ES Module version with dynamic import
+// Build script - Uses npx to ensure esbuild is available
 import { build as viteBuild } from "vite";
 import { rm, readFile } from "fs/promises";
+import { execSync } from "child_process";
 
-// server deps to bundle to reduce openat(2) syscalls
+// server deps to bundle
 const allowlist = [
-  "@google/generative-ai",
-  "axios",
   "connect-pg-simple",
   "cors",
   "date-fns",
   "drizzle-orm",
   "drizzle-zod",
   "express",
-  "express-rate-limit",
   "express-session",
-  "jsonwebtoken",
   "memorystore",
-  "multer",
-  "nanoid",
-  "nodemailer",
-  "openai",
   "passport",
   "passport-local",
   "pg",
-  "stripe",
-  "uuid",
-  "ws",
-  "xlsx",
   "zod",
   "zod-validation-error",
 ];
@@ -38,8 +27,6 @@ async function buildAll() {
   await viteBuild();
 
   console.log("building server...");
-  const { build: esbuild } = await import("esbuild");
-  
   const pkg = JSON.parse(await readFile("package.json", "utf-8"));
   const allDeps = [
     ...Object.keys(pkg.dependencies || {}),
@@ -47,19 +34,12 @@ async function buildAll() {
   ];
   const externals = allDeps.filter((dep) => !allowlist.includes(dep));
 
-  await esbuild({
-    entryPoints: ["server/index.ts"],
-    platform: "node",
-    bundle: true,
-    format: "cjs",
-    outfile: "dist/index.cjs",
-    define: {
-      "process.env.NODE_ENV": '"production"',
-    },
-    minify: true,
-    external: externals,
-    logLevel: "info",
-  });
+  // Use npx to run esbuild
+  const externalArgs = externals.map(e => `--external:${e}`).join(' ');
+  const command = `npx esbuild server/index.ts --platform=node --bundle --format=cjs --outfile=dist/index.cjs --minify ${externalArgs}`;
+  
+  console.log("Running:", command);
+  execSync(command, { stdio: 'inherit' });
   
   console.log("build complete!");
 }
