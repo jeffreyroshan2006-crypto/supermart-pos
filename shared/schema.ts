@@ -8,7 +8,8 @@ import { z } from "zod";
 // ============================================
 export const userRoleEnum = pgEnum("user_role", ["admin", "manager", "cashier"]);
 export const userStatusEnum = pgEnum("user_status", ["active", "inactive", "suspended"]);
-export const paymentModeEnum = pgEnum("payment_mode", ["cash", "upi", "card", "wallet", "split"]);
+export const paymentModes = ["cash", "upi", "card", "wallet", "split"] as const;
+export const paymentModeEnum = pgEnum("payment_mode", paymentModes);
 export const paymentStatusEnum = pgEnum("payment_status", ["pending", "completed", "failed", "refunded"]);
 export const billStatusEnum = pgEnum("bill_status", ["draft", "completed", "cancelled", "hold", "refunded"]);
 export const purchaseOrderStatusEnum = pgEnum("purchase_order_status", ["draft", "ordered", "partial", "received", "cancelled"]);
