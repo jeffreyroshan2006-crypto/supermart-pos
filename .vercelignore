@@ -6,7 +6,6 @@
 node_modules/
 
 # Build output
-dist/
 dist-ssr/
 *.local
 
@@ -51,3 +50,8 @@ coverage/
 *.db
 *.sqlite
 *.sqlite3
+
+# TypeScript source files (compiled to dist)
+api/*.ts
+server/*.ts
+shared/*.ts
