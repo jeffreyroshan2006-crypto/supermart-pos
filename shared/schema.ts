@@ -16,7 +16,7 @@ export const purchaseOrderStatusEnum = pgEnum("purchase_order_status", ["draft",
 export const stockAdjustmentTypeEnum = pgEnum("stock_adjustment_type", ["damage", "expiry", "correction", "return", "theft"]);
 export const offerTypeEnum = pgEnum("offer_type", ["percentage", "fixed_amount", "buy_x_get_y", "bundle"]);
 export const activityActionEnum = pgEnum("activity_action", [
-  "login", "logout", "create", "update", "delete", "print", "export", 
+  "login", "logout", "create", "update", "delete", "print", "export",
   "stock_adjust", "bill_complete", "bill_cancel", "bill_hold", "bill_resume"
 ]);
 
@@ -100,7 +100,7 @@ export const categories = pgTable("categories", {
   description: text("description"),
   color: text("color").default("#3b82f6"),
   icon: text("icon"),
-  parentId: integer("parent_id").references(() => categories.id),
+  parentId: integer("parent_id").references((): any => categories.id),
   sortOrder: integer("sort_order").default(0),
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
@@ -153,34 +153,34 @@ export const products = pgTable("products", {
   brandId: integer("brand_id").references(() => brands.id),
   unitId: integer("unit_id").references(() => units.id),
   supplierId: integer("supplier_id").references(() => suppliers.id),
-  
+
   // Pricing
   mrp: numeric("mrp").notNull(), // Maximum Retail Price
   purchasePrice: numeric("purchase_price").notNull(),
   sellingPrice: numeric("selling_price").notNull(),
-  
+
   // GST/Tax (Indian context)
   gstRate: numeric("gst_rate").notNull().default("0"), // 0, 5, 12, 18, 28
   hsnCode: text("hsn_code"), // Harmonized System of Nomenclature
-  
+
   // Stock
   stockQuantity: numeric("stock_quantity").notNull().default("0"),
   minStockLevel: numeric("min_stock_level").default("10"),
   maxStockLevel: numeric("max_stock_level"),
   reorderPoint: numeric("reorder_point").default("20"),
-  
+
   // Physical
   weight: numeric("weight"),
   dimensions: json("dimensions"), // {length, width, height}
-  
+
   // Status
   isActive: boolean("is_active").default(true),
   isTrackInventory: boolean("is_track_inventory").default(true),
   allowNegativeStock: boolean("allow_negative_stock").default(false),
-  
+
   // Media
   imageUrl: text("image_url"),
-  
+
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -193,24 +193,24 @@ export const customers = pgTable("customers", {
   phone: text("phone"),
   email: text("email"),
   gstin: text("gstin"),
-  
+
   // Address
   address: text("address"),
   city: text("city"),
   state: text("state"),
   pincode: text("pincode"),
-  
+
   // Loyalty
   loyaltyPoints: integer("loyalty_points").default(0),
   loyaltyTier: text("loyalty_tier").default("bronze"), // bronze, silver, gold, platinum
   totalPurchaseAmount: numeric("total_purchase_amount").default("0"),
   visitCount: integer("visit_count").default(0),
-  
+
   // CRM
   birthDate: date("birth_date"),
   anniversaryDate: date("anniversary_date"),
   notes: text("notes"),
-  
+
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -225,23 +225,23 @@ export const purchaseOrders = pgTable("purchase_orders", {
   organizationId: integer("organization_id").references(() => organizations.id).notNull(),
   storeId: integer("store_id").references(() => stores.id).notNull(),
   supplierId: integer("supplier_id").references(() => suppliers.id).notNull(),
-  
+
   poNumber: text("po_number").notNull().unique(),
   referenceNumber: text("reference_number"), // Supplier's reference
   status: purchaseOrderStatusEnum("status").default("draft"),
-  
+
   orderDate: date("order_date").notNull(),
   expectedDeliveryDate: date("expected_delivery_date"),
   receivedDate: date("received_date"),
-  
+
   subtotal: numeric("subtotal").notNull().default("0"),
   taxTotal: numeric("tax_total").notNull().default("0"),
   discountTotal: numeric("discount_total").default("0"),
   grandTotal: numeric("grand_total").notNull().default("0"),
-  
+
   notes: text("notes"),
   terms: text("terms"),
-  
+
   createdBy: integer("created_by").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -251,16 +251,16 @@ export const purchaseOrderItems = pgTable("purchase_order_items", {
   id: serial("id").primaryKey(),
   purchaseOrderId: integer("purchase_order_id").references(() => purchaseOrders.id).notNull(),
   productId: integer("product_id").references(() => products.id).notNull(),
-  
+
   orderedQuantity: numeric("ordered_quantity").notNull(),
   receivedQuantity: numeric("received_quantity").default("0"),
-  
+
   unitPrice: numeric("unit_price").notNull(),
   gstRate: numeric("gst_rate").default("0"),
   discountPercent: numeric("discount_percent").default("0"),
-  
+
   totalAmount: numeric("total_amount").notNull(),
-  
+
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -270,16 +270,16 @@ export const stockAdjustments = pgTable("stock_adjustments", {
   organizationId: integer("organization_id").references(() => organizations.id).notNull(),
   storeId: integer("store_id").references(() => stores.id).notNull(),
   productId: integer("product_id").references(() => products.id).notNull(),
-  
+
   adjustmentType: stockAdjustmentTypeEnum("adjustment_type").notNull(),
   quantity: numeric("quantity").notNull(), // Can be positive or negative
   reason: text("reason"),
-  
+
   referenceNumber: text("reference_number"),
   adjustmentDate: date("adjustment_date").notNull(),
-  
+
   costPrice: numeric("cost_price"), // For damage/theft valuation
-  
+
   performedBy: integer("performed_by").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -292,66 +292,66 @@ export const bills = pgTable("bills", {
   id: serial("id").primaryKey(),
   organizationId: integer("organization_id").references(() => organizations.id).notNull(),
   storeId: integer("store_id").references(() => stores.id).notNull(),
-  
+
   billNumber: text("bill_number").notNull(),
   publicId: text("public_id").notNull().default(sql`gen_random_uuid()`),
-  
+
   // Bill status
   status: billStatusEnum("status").default("draft"),
-  
+
   // Counter and cashier
   counterId: text("counter_id").default("C1"),
   cashierId: integer("cashier_id").references(() => users.id).notNull(),
-  
+
   // Customer
   customerId: integer("customer_id").references(() => customers.id),
   customerName: text("customer_name"),
   customerPhone: text("customer_phone"),
   customerGstin: text("customer_gstin"),
-  
+
   // Dates
   billDate: timestamp("bill_date").defaultNow(),
   holdTime: timestamp("hold_time"), // When bill was put on hold
   completedAt: timestamp("completed_at"),
-  
+
   // Amounts
   subtotal: numeric("subtotal").notNull().default("0"),
   itemDiscountTotal: numeric("item_discount_total").default("0"),
   billDiscountAmount: numeric("bill_discount_amount").default("0"),
   billDiscountPercent: numeric("bill_discount_percent").default("0"),
   taxTotal: numeric("tax_total").notNull().default("0"),
-  
+
   // GST Breakdown (for Indian GST filing)
   cgstTotal: numeric("cgst_total").default("0"),
   sgstTotal: numeric("sgst_total").default("0"),
   igstTotal: numeric("igst_total").default("0"),
-  
+
   // Final amounts
   roundOff: numeric("round_off").default("0"),
   grandTotal: numeric("grand_total").notNull().default("0"),
-  
+
   // Payment
   paymentMode: paymentModeEnum("payment_mode").notNull(),
   paymentStatus: paymentStatusEnum("payment_status").default("completed"),
-  
+
   // Loyalty
   loyaltyPointsEarned: integer("loyalty_points_earned").default(0),
   loyaltyPointsRedeemed: integer("loyalty_points_redeemed").default(0),
   loyaltyDiscount: numeric("loyalty_discount").default("0"),
-  
+
   // Notes
   notes: text("notes"),
   terms: text("terms"),
-  
+
   // Print/Share
   isPrinted: boolean("is_printed").default(false),
   printCount: integer("print_count").default(0),
-  
+
   // Cancellation
   cancelledAt: timestamp("cancelled_at"),
   cancelledBy: integer("cancelled_by").references(() => users.id),
   cancellationReason: text("cancellation_reason"),
-  
+
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -360,55 +360,55 @@ export const billItems = pgTable("bill_items", {
   id: serial("id").primaryKey(),
   billId: integer("bill_id").references(() => bills.id).notNull(),
   productId: integer("product_id").references(() => products.id).notNull(),
-  
+
   // Product snapshot at time of billing
   productName: text("product_name").notNull(),
   productSku: text("product_sku").notNull(),
   hsnCode: text("hsn_code"),
-  
+
   quantity: numeric("quantity").notNull(),
   unit: text("unit").notNull(),
-  
+
   // Pricing
   mrp: numeric("mrp").notNull(),
   sellingPrice: numeric("selling_price").notNull(),
-  
+
   // Item-level discount
   discountPercent: numeric("discount_percent").default("0"),
   discountAmount: numeric("discount_amount").default("0"),
-  
+
   // Tax
   gstRate: numeric("gst_rate").default("0"),
   taxableAmount: numeric("taxable_amount").notNull(),
   cgstAmount: numeric("cgst_amount").default("0"),
   sgstAmount: numeric("sgst_amount").default("0"),
   igstAmount: numeric("igst_amount").default("0"),
-  
+
   // Final
   totalAmount: numeric("total_amount").notNull(),
-  
+
   // Return info
   isReturned: boolean("is_returned").default(false),
   returnedQuantity: numeric("returned_quantity").default("0"),
-  
+
   createdAt: timestamp("created_at").defaultNow(),
 });
 
 export const billPayments = pgTable("bill_payments", {
   id: serial("id").primaryKey(),
   billId: integer("bill_id").references(() => bills.id).notNull(),
-  
+
   paymentMode: paymentModeEnum("payment_mode").notNull(),
   amount: numeric("amount").notNull(),
-  
+
   // For UPI/Card
   referenceNumber: text("reference_number"),
   transactionId: text("transaction_id"),
-  
+
   // For card
   cardLastFour: text("card_last_four"),
   cardNetwork: text("card_network"),
-  
+
   receivedAt: timestamp("received_at").defaultNow(),
   receivedBy: integer("received_by").references(() => users.id),
 });
@@ -419,18 +419,18 @@ export const heldBills = pgTable("held_bills", {
   storeId: integer("store_id").references(() => stores.id).notNull(),
   counterId: text("counter_id").default("C1"),
   cashierId: integer("cashier_id").references(() => users.id).notNull(),
-  
+
   holdReference: text("hold_reference").notNull(), // e.g., "HOLD-001"
   customerName: text("customer_name"),
-  
+
   // Serialized cart data
   cartData: json("cart_data").notNull(),
   subtotal: numeric("subtotal").notNull(),
-  
+
   heldAt: timestamp("held_at").defaultNow(),
   resumedAt: timestamp("resumed_at"),
   expiresAt: timestamp("expires_at"), // Auto-delete after 24 hours
-  
+
   notes: text("notes"),
 });
 
@@ -442,38 +442,38 @@ export const offers = pgTable("offers", {
   id: serial("id").primaryKey(),
   organizationId: integer("organization_id").references(() => organizations.id).notNull(),
   storeId: integer("store_id").references(() => stores.id),
-  
+
   name: text("name").notNull(),
   description: text("description"),
   code: text("code").unique(), // e.g., "DIWALI2024"
-  
+
   offerType: offerTypeEnum("offer_type").notNull(),
-  
+
   // Value based on type
   discountPercent: numeric("discount_percent"), // For percentage
   discountAmount: numeric("discount_amount"), // For fixed_amount
   buyQuantity: integer("buy_quantity"), // For buy_x_get_y
   getQuantity: integer("get_quantity"), // For buy_x_get_y
   bundlePrice: numeric("bundle_price"), // For bundle
-  
+
   // Conditions
   minPurchaseAmount: numeric("min_purchase_amount"),
   maxDiscountAmount: numeric("max_discount_amount"),
   applicableCategories: json("applicable_categories"), // Array of category IDs
   applicableProducts: json("applicable_products"), // Array of product IDs
-  
+
   // Validity
   startDate: timestamp("start_date").notNull(),
   endDate: timestamp("end_date").notNull(),
-  
+
   // Usage limits
   maxUsageCount: integer("max_usage_count"),
   currentUsageCount: integer("current_usage_count").default(0),
   maxUsagePerCustomer: integer("max_usage_per_customer"),
-  
+
   isActive: boolean("is_active").default(true),
   priority: integer("priority").default(0), // Higher priority = applied first
-  
+
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -486,13 +486,13 @@ export const loyaltyTransactions = pgTable("loyalty_transactions", {
   id: serial("id").primaryKey(),
   customerId: integer("customer_id").references(() => customers.id).notNull(),
   billId: integer("bill_id").references(() => bills.id),
-  
+
   transactionType: text("transaction_type").notNull(), // "earn", "redeem", "expire", "adjust"
   points: integer("points").notNull(), // Positive for earn, negative for redeem
-  
+
   description: text("description"),
   expiryDate: date("expiry_date"),
-  
+
   createdAt: timestamp("created_at").defaultNow(),
   createdBy: integer("created_by").references(() => users.id),
 });
@@ -504,35 +504,35 @@ export const loyaltyTransactions = pgTable("loyalty_transactions", {
 export const storeSettings = pgTable("store_settings", {
   id: serial("id").primaryKey(),
   storeId: integer("store_id").references(() => stores.id).notNull().unique(),
-  
+
   // Invoice settings
   invoicePrefix: text("invoice_prefix").default("INV"),
   invoiceSuffix: text("invoice_suffix"),
   nextInvoiceNumber: integer("next_invoice_number").default(1),
   invoiceFooter: text("invoice_footer"),
   invoiceTerms: text("invoice_terms"),
-  
+
   // Print settings
   printReceiptOnComplete: boolean("print_receipt_on_complete").default(true),
   showLogoOnReceipt: boolean("show_logo_on_receipt").default(true),
   receiptWidth: text("receipt_width").default("80mm"), // 58mm, 80mm
-  
+
   // Tax defaults
   defaultGstRate: numeric("default_gst_rate").default("18"),
   priceTaxInclusive: boolean("price_tax_inclusive").default(true),
-  
+
   // Currency
   currencyCode: text("currency_code").default("INR"),
   currencySymbol: text("currency_symbol").default("₹"),
-  
+
   // Loyalty
   loyaltyEnabled: boolean("loyalty_enabled").default(false),
   loyaltyPointsPerRupee: numeric("loyalty_points_per_rupee").default("1"),
   loyaltyRedemptionValue: numeric("loyalty_redemption_value").default("1"), // ₹1 per point
-  
+
   // Counter
   counterName: text("counter_name").default("Counter 1"),
-  
+
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
@@ -541,18 +541,18 @@ export const activityLogs = pgTable("activity_logs", {
   organizationId: integer("organization_id").references(() => organizations.id).notNull(),
   storeId: integer("store_id").references(() => stores.id),
   userId: integer("user_id").references(() => users.id),
-  
+
   action: activityActionEnum("action").notNull(),
   entityType: text("entity_type"), // "product", "bill", "customer", etc.
   entityId: integer("entity_id"),
-  
+
   description: text("description"),
   oldData: json("old_data"),
   newData: json("new_data"),
-  
+
   ipAddress: text("ip_address"),
   userAgent: text("user_agent"),
-  
+
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -801,7 +801,7 @@ export const insertStockAdjustmentSchema = createInsertSchema(stockAdjustments).
 export const insertBillSchema = createInsertSchema(bills).omit({ id: true, createdAt: true, updatedAt: true, completedAt: true, cancelledAt: true, holdTime: true });
 export const insertBillItemSchema = createInsertSchema(billItems).omit({ id: true, createdAt: true });
 export const insertBillPaymentSchema = createInsertSchema(billPayments).omit({ id: true, receivedAt: true });
-export const insertHeldBillSchema = createInsertSchema(heldBills).omit({ id: true, createdAt: true, resumedAt: true });
+export const insertHeldBillSchema = createInsertSchema(heldBills).omit({ id: true, heldAt: true, resumedAt: true });
 export const insertOfferSchema = createInsertSchema(offers).omit({ id: true, createdAt: true, updatedAt: true, currentUsageCount: true });
 export const insertLoyaltyTransactionSchema = createInsertSchema(loyaltyTransactions).omit({ id: true, createdAt: true });
 export const insertStoreSettingsSchema = createInsertSchema(storeSettings).omit({ id: true, updatedAt: true });

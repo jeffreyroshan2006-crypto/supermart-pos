@@ -27,8 +27,8 @@ async function buildAll() {
   await viteBuild();
 
   console.log("building server...");
-  
-  const pkg = await import("../package.json", { assert: { type: "json" } });
+
+  const pkg = await import("../package.json", { with: { type: "json" } });
   const allDeps = [
     ...Object.keys(pkg.default.dependencies || {}),
     ...Object.keys(pkg.default.devDependencies || {}),
@@ -45,7 +45,7 @@ async function buildAll() {
     external: externals,
     logLevel: "info",
   });
-  
+
   console.log("build complete!");
 }
 
