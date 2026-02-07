@@ -1,8 +1,9 @@
 import "dotenv/config";
 import { db } from "./db";
-import { 
-  users, products, suppliers, customers, categories, units,
-  organizations, stores, userStores, storeSettings
+import { eq } from "drizzle-orm";
+import {
+    users, products, suppliers, customers, categories, units,
+    organizations, stores, userStores, storeSettings, brands
 } from "@shared/schema";
 import { hashPassword } from "./auth";
 
@@ -14,7 +15,7 @@ async function seed() {
         // 1. CREATE ORGANIZATION
         // ============================================
         console.log("🏢 Setting up organization...");
-        const [org] = await db.insert(organizations).values({
+        let [org] = await db.insert(organizations).values({
             name: "SuperMart India",
             slug: "supermart-india",
             email: "admin@supermart.in",
@@ -24,14 +25,17 @@ async function seed() {
             isActive: true,
         }).onConflictDoNothing().returning();
 
-        const organizationId = org?.id || 1;
-        console.log("✅ Organization created/updated\n");
+        if (!org) {
+            [org] = await db.select().from(organizations).where(eq(organizations.slug, "supermart-india")).limit(1);
+        }
+        const organizationId = org.id;
+        console.log(`✅ Organization: ${org.name} (ID: ${organizationId})\n`);
 
         // ============================================
         // 2. CREATE STORE
         // ============================================
         console.log("🏪 Setting up store...");
-        const [store] = await db.insert(stores).values({
+        let [store] = await db.insert(stores).values({
             organizationId,
             name: "Main Branch - Bangalore",
             code: "MAIN",
@@ -46,8 +50,11 @@ async function seed() {
             isPrimary: true,
         }).onConflictDoNothing().returning();
 
-        const storeId = store?.id || 1;
-        console.log("✅ Store created/updated\n");
+        if (!store) {
+            [store] = await db.select().from(stores).where(eq(stores.code, "MAIN")).limit(1);
+        }
+        const storeId = store.id;
+        console.log(`✅ Store: ${store.name} (ID: ${storeId})\n`);
 
         // ============================================
         // 3. CREATE ADMIN USER
@@ -55,7 +62,7 @@ async function seed() {
         console.log("👤 Creating admin user...");
         const hashedPassword = await hashPassword("admin123");
 
-        const [adminUser] = await db.insert(users).values({
+        let [adminUser] = await db.insert(users).values({
             organizationId,
             email: "admin@supermart.in",
             password: hashedPassword,
@@ -66,7 +73,10 @@ async function seed() {
             defaultStoreId: storeId,
         }).onConflictDoNothing().returning();
 
-        const userId = adminUser?.id || 1;
+        if (!adminUser) {
+            [adminUser] = await db.select().from(users).where(eq(users.email, "admin@supermart.in")).limit(1);
+        }
+        const userId = adminUser.id;
 
         // Link user to store
         await db.insert(userStores).values({
@@ -121,13 +131,19 @@ async function seed() {
             { name: "Oil & Ghee", description: "Cooking oil, mustard oil, ghee", color: "#fbbf24", icon: "droplet" },
         ];
 
+        const categoryMap = new Map<string, number>();
         for (const cat of categoriesData) {
-            await db.insert(categories).values({
+            let [newCat] = await db.insert(categories).values({
                 organizationId,
                 ...cat,
                 sortOrder: categoriesData.indexOf(cat),
                 isActive: true,
-            }).onConflictDoNothing();
+            }).onConflictDoNothing().returning();
+
+            if (!newCat) {
+                [newCat] = await db.select().from(categories).where(eq(categories.name, cat.name)).limit(1);
+            }
+            categoryMap.set(cat.name, newCat.id);
         }
         console.log(`✅ Created ${categoriesData.length} categories\n`);
 
@@ -148,17 +164,45 @@ async function seed() {
             { name: "Pouch", code: "PCH" },
         ];
 
+        const unitMap = new Map<string, number>();
         for (const unit of unitsData) {
-            await db.insert(units).values({
+            let [newUnit] = await db.insert(units).values({
                 organizationId,
                 ...unit,
                 isActive: true,
-            }).onConflictDoNothing();
+            }).onConflictDoNothing().returning();
+
+            if (!newUnit) {
+                [newUnit] = await db.select().from(units).where(eq(units.code, unit.code)).limit(1);
+            }
+            unitMap.set(unit.code, newUnit.id);
         }
         console.log(`✅ Created ${unitsData.length} units\n`);
 
         // ============================================
-        // 7. CREATE SUPPLIERS
+        // 7. CREATE BRANDS
+        // ============================================
+        console.log("🏷️  Creating brands...");
+        const brandsData = [
+            "HUL", "Nestle", "Amul", "ITC", "Dabur", "Britannia", "Marico", "Tata", "Fortune", "Aashirvaad", "Pepsico", "Coca Cola"
+        ];
+        const brandMap = new Map<string, number>();
+        for (const brandName of brandsData) {
+            let [newBrand] = await db.insert(brands).values({
+                organizationId,
+                name: brandName,
+                isActive: true,
+            }).onConflictDoNothing().returning();
+
+            if (!newBrand) {
+                [newBrand] = await db.select().from(brands).where(eq(brands.name, brandName)).limit(1);
+            }
+            brandMap.set(brandName, newBrand.id);
+        }
+        console.log(`✅ Created ${brandsData.length} brands\n`);
+
+        // ============================================
+        // 8. CREATE SUPPLIERS
         // ============================================
         console.log("🏭 Creating suppliers...");
         const suppliersData = [
@@ -177,122 +221,46 @@ async function seed() {
                 organizationId,
                 ...supplier,
                 city: supplier.address.split(", ").pop()?.split(" ")[0] || "",
-                state: supplier.gstin.substring(0, 2) === "29" ? "Karnataka" : 
-                      supplier.gstin.substring(0, 2) === "24" ? "Gujarat" :
-                      supplier.gstin.substring(0, 2) === "07" ? "Delhi" :
-                      supplier.gstin.substring(0, 2) === "27" ? "Maharashtra" : "Other",
+                state: supplier.gstin.substring(0, 2) === "29" ? "Karnataka" :
+                    supplier.gstin.substring(0, 2) === "24" ? "Gujarat" :
+                        supplier.gstin.substring(0, 2) === "07" ? "Delhi" :
+                            supplier.gstin.substring(0, 2) === "27" ? "Maharashtra" : "Other",
                 isActive: true,
             }).onConflictDoNothing();
         }
         console.log(`✅ Created ${suppliersData.length} suppliers\n`);
 
         // Get supplier IDs
-        const allSuppliers = await db.select().from(suppliers).where({ organizationId });
+        const allSuppliers = await db.select().from(suppliers).where(eq(suppliers.organizationId, organizationId));
         const supplierIds = allSuppliers.map(s => s.id);
 
         // ============================================
-        // 8. CREATE INDIAN PRODUCTS
+        // 9. CREATE INDIAN PRODUCTS
         // ============================================
         console.log("🛍️  Creating Indian products catalog...");
-        
+
         const indianProducts = [
             // GROCERIES
-            { name: "India Gate Basmati Rice 5kg", category: "Rice & Grains", sku: "RICE001", unit: "KG", mrp: 520, purchasePrice: 420, sellingPrice: 485, gstRate: 5, stock: 50, minStock: 10, hsn: "1006" },
-            { name: "Daawat Rozana Gold 1kg", category: "Rice & Grains", sku: "RICE002", unit: "KG", mrp: 95, purchasePrice: 75, sellingPrice: 88, gstRate: 5, stock: 100, minStock: 20, hsn: "1006" },
-            { name: "Aashirvaad Atta 5kg", category: "Groceries", sku: "ATTA001", unit: "KG", mrp: 245, purchasePrice: 195, sellingPrice: 225, gstRate: 0, stock: 80, minStock: 15, hsn: "1101" },
-            { name: "Pillsbury Chakki Fresh Atta 10kg", category: "Groceries", sku: "ATTA002", unit: "KG", mrp: 450, purchasePrice: 380, sellingPrice: 425, gstRate: 0, stock: 40, minStock: 10, hsn: "1101" },
-            { name: "Fortune Maida 1kg", category: "Groceries", sku: "MAIDA001", unit: "KG", mrp: 55, purchasePrice: 42, sellingPrice: 50, gstRate: 0, stock: 60, minStock: 15, hsn: "1101" },
-            
+            { name: "India Gate Basmati Rice 5kg", category: "Rice & Grains", brand: "Fortune", sku: "RICE001", unit: "KG", mrp: 520, purchasePrice: 420, sellingPrice: 485, gstRate: 5, stock: 50, minStock: 10, hsn: "1006" },
+            { name: "Daawat Rozana Gold 1kg", category: "Rice & Grains", brand: "Fortune", sku: "RICE002", unit: "KG", mrp: 95, purchasePrice: 75, sellingPrice: 88, gstRate: 5, stock: 100, minStock: 20, hsn: "1006" },
+            { name: "Aashirvaad Atta 5kg", category: "Groceries", brand: "Aashirvaad", sku: "ATTA001", unit: "KG", mrp: 245, purchasePrice: 195, sellingPrice: 225, gstRate: 0, stock: 80, minStock: 15, hsn: "1101" },
+            { name: "Pillsbury Chakki Fresh Atta 10kg", category: "Groceries", brand: "Fortune", sku: "ATTA002", unit: "KG", mrp: 450, purchasePrice: 380, sellingPrice: 425, gstRate: 0, stock: 40, minStock: 10, hsn: "1101" },
+            { name: "Fortune Maida 1kg", category: "Groceries", brand: "Fortune", sku: "MAIDA001", unit: "KG", mrp: 55, purchasePrice: 42, sellingPrice: 50, gstRate: 0, stock: 60, minStock: 15, hsn: "1101" },
+
             // DAIRY
-            { name: "Amul Taaza Milk 1L", category: "Dairy & Eggs", sku: "MILK001", unit: "LTR", mrp: 72, purchasePrice: 58, sellingPrice: 68, gstRate: 0, stock: 200, minStock: 50, hsn: "0401" },
-            { name: "Amul Gold Milk 500ml", category: "Dairy & Eggs", sku: "MILK002", unit: "ML", mrp: 40, purchasePrice: 32, sellingPrice: 38, gstRate: 0, stock: 150, minStock: 40, hsn: "0401" },
-            { name: "Amul Butter 500g", category: "Dairy & Eggs", sku: "BUTTER001", unit: "GM", mrp: 275, purchasePrice: 225, sellingPrice: 260, gstRate: 12, stock: 40, minStock: 10, hsn: "0405" },
-            { name: "Amul Cheese Slices 200g", category: "Dairy & Eggs", sku: "CHEESE001", unit: "GM", mrp: 135, purchasePrice: 108, sellingPrice: 125, gstRate: 12, stock: 35, minStock: 8, hsn: "0406" },
-            { name: "Amul Paneer 200g", category: "Dairy & Eggs", sku: "PANEER001", unit: "GM", mrp: 95, purchasePrice: 75, sellingPrice: 88, gstRate: 0, stock: 45, minStock: 10, hsn: "0406" },
-            { name: "Amul Curd 400g", category: "Dairy & Eggs", sku: "CURD001", unit: "GM", mrp: 52, purchasePrice: 42, sellingPrice: 48, gstRate: 0, stock: 80, minStock: 20, hsn: "0403" },
-            { name: "Amul Masti Buttermilk 1L", category: "Dairy & Eggs", sku: "BUTTERMILK001", unit: "LTR", mrp: 45, purchasePrice: 36, sellingPrice: 42, gstRate: 0, stock: 60, minStock: 15, hsn: "0403" },
-            { name: "Farm Fresh Eggs 12pcs", category: "Dairy & Eggs", sku: "EGGS001", unit: "PCS", mrp: 95, purchasePrice: 75, sellingPrice: 88, gstRate: 0, stock: 100, minStock: 30, hsn: "0407" },
-            { name: "Venky's Eggs 6pcs", category: "Dairy & Eggs", sku: "EGGS002", unit: "PCS", mrp: 55, purchasePrice: 44, sellingPrice: 50, gstRate: 0, stock: 80, minStock: 20, hsn: "0407" },
-            
-            // SPICES & MASALA
-            { name: "MDH Deggi Mirch 100g", category: "Spices & Masala", sku: "SPICE001", unit: "GM", mrp: 85, purchasePrice: 68, sellingPrice: 78, gstRate: 0, stock: 40, minStock: 10, hsn: "0904" },
-            { name: "MDH Haldi Powder 100g", category: "Spices & Masala", sku: "SPICE002", unit: "GM", mrp: 42, purchasePrice: 34, sellingPrice: 38, gstRate: 0, stock: 45, minStock: 12, hsn: "0910" },
-            { name: "Everest Garam Masala 100g", category: "Spices & Masala", sku: "SPICE003", unit: "GM", mrp: 95, purchasePrice: 76, sellingPrice: 88, gstRate: 0, stock: 35, minStock: 8, hsn: "0910" },
-            { name: "Everest Kitchen King Masala 100g", category: "Spices & Masala", sku: "SPICE004", unit: "GM", mrp: 82, purchasePrice: 66, sellingPrice: 75, gstRate: 0, stock: 40, minStock: 10, hsn: "0910" },
-            { name: "Catch Red Chilli Powder 200g", category: "Spices & Masala", sku: "SPICE005", unit: "GM", mrp: 125, purchasePrice: 100, sellingPrice: 115, gstRate: 0, stock: 30, minStock: 8, hsn: "0904" },
-            { name: "Tata Sampann Coriander Powder 200g", category: "Spices & Masala", sku: "SPICE006", unit: "GM", mrp: 95, purchasePrice: 76, sellingPrice: 88, gstRate: 0, stock: 35, minStock: 10, hsn: "0910" },
-            
-            // OIL & GHEE
-            { name: "Fortune Sunflower Oil 1L", category: "Oil & Ghee", sku: "OIL001", unit: "LTR", mrp: 165, purchasePrice: 132, sellingPrice: 152, gstRate: 5, stock: 60, minStock: 15, hsn: "1512" },
-            { name: "Fortune Mustard Oil 1L", category: "Oil & Ghee", sku: "OIL002", unit: "LTR", mrp: 185, purchasePrice: 148, sellingPrice: 172, gstRate: 5, stock: 50, minStock: 12, hsn: "1514" },
-            { name: "Saffola Gold Oil 1L", category: "Oil & Ghee", sku: "OIL003", unit: "LTR", mrp: 195, purchasePrice: 156, sellingPrice: 182, gstRate: 5, stock: 45, minStock: 10, hsn: "1512" },
-            { name: "Amul Pure Ghee 1L", category: "Oil & Ghee", sku: "GHEE001", unit: "LTR", mrp: 650, purchasePrice: 520, sellingPrice: 595, gstRate: 12, stock: 25, minStock: 5, hsn: "0405" },
-            { name: "Dalda Vanaspati 1L", category: "Oil & Ghee", sku: "DALDA001", unit: "LTR", mrp: 145, purchasePrice: 116, sellingPrice: 135, gstRate: 5, stock: 40, minStock: 10, hsn: "1516" },
-            
+            { name: "Amul Taaza Milk 1L", category: "Dairy & Eggs", brand: "Amul", sku: "MILK001", unit: "LTR", mrp: 72, purchasePrice: 58, sellingPrice: 68, gstRate: 0, stock: 200, minStock: 50, hsn: "0401" },
+            { name: "Amul Gold Milk 500ml", category: "Dairy & Eggs", brand: "Amul", sku: "MILK002", unit: "ML", mrp: 40, purchasePrice: 32, sellingPrice: 38, gstRate: 0, stock: 150, minStock: 40, hsn: "0401" },
+            { name: "Amul Butter 500g", category: "Dairy & Eggs", brand: "Amul", sku: "BUTTER001", unit: "GM", mrp: 275, purchasePrice: 225, sellingPrice: 260, gstRate: 12, stock: 40, minStock: 10, hsn: "0405" },
+            { name: "Amul Cheese Slices 200g", category: "Dairy & Eggs", brand: "Amul", sku: "CHEESE001", unit: "GM", mrp: 135, purchasePrice: 108, sellingPrice: 125, gstRate: 12, stock: 35, minStock: 8, hsn: "0406" },
+            { name: "Amul Paneer 200g", category: "Dairy & Eggs", brand: "Amul", sku: "PANEER001", unit: "GM", mrp: 95, purchasePrice: 75, sellingPrice: 88, gstRate: 0, stock: 45, minStock: 10, hsn: "0406" },
+
             // SNACKS
-            { name: "Lay's Classic Salted 52g", category: "Snacks", sku: "CHIPS001", unit: "GM", mrp: 20, purchasePrice: 15, sellingPrice: 18, gstRate: 12, stock: 150, minStock: 40, hsn: "1905" },
-            { name: "Lay's Magic Masala 52g", category: "Snacks", sku: "CHIPS002", unit: "GM", mrp: 20, purchasePrice: 15, sellingPrice: 18, gstRate: 12, stock: 140, minStock: 35, hsn: "1905" },
-            { name: "Bingo! Mad Angles 45g", category: "Snacks", sku: "CHIPS003", unit: "GM", mrp: 10, purchasePrice: 7.5, sellingPrice: 9, gstRate: 12, stock: 200, minStock: 50, hsn: "1905" },
-            { name: "Haldiram's Bhujia Sev 200g", category: "Snacks", sku: "NAMKEEN001", unit: "GM", mrp: 95, purchasePrice: 76, sellingPrice: 88, gstRate: 12, stock: 60, minStock: 15, hsn: "1905" },
-            { name: "Haldiram's Aloo Bhujia 200g", category: "Snacks", sku: "NAMKEEN002", unit: "GM", mrp: 90, purchasePrice: 72, sellingPrice: 84, gstRate: 12, stock: 55, minStock: 15, hsn: "1905" },
-            { name: "Britannia Good Day Cashew 72g", category: "Snacks", sku: "BISCUIT001", unit: "GM", mrp: 25, purchasePrice: 19, sellingPrice: 22, gstRate: 18, stock: 120, minStock: 30, hsn: "1905" },
-            { name: "Parle-G Gold 100g", category: "Snacks", sku: "BISCUIT002", unit: "GM", mrp: 15, purchasePrice: 11, sellingPrice: 13, gstRate: 18, stock: 200, minStock: 50, hsn: "1905" },
-            { name: "Monaco Classic 76.8g", category: "Snacks", sku: "BISCUIT003", unit: "GM", mrp: 25, purchasePrice: 19, sellingPrice: 22, gstRate: 18, stock: 100, minStock: 25, hsn: "1905" },
-            
+            { name: "Lay's Classic Salted 52g", category: "Snacks", brand: "Pepsico", sku: "CHIPS001", unit: "GM", mrp: 20, purchasePrice: 15, sellingPrice: 18, gstRate: 12, stock: 150, minStock: 40, hsn: "1905" },
+            { name: "Britannia Good Day Cashew 72g", category: "Snacks", brand: "Britannia", sku: "BISCUIT001", unit: "GM", mrp: 25, purchasePrice: 19, sellingPrice: 22, gstRate: 18, stock: 120, minStock: 30, hsn: "1905" },
+
             // BEVERAGES
-            { name: "Tata Tea Gold 250g", category: "Beverages", sku: "TEA001", unit: "GM", mrp: 165, purchasePrice: 132, sellingPrice: 152, gstRate: 5, stock: 50, minStock: 12, hsn: "0902" },
-            { name: "Brooke Bond Red Label 250g", category: "Beverages", sku: "TEA002", unit: "GM", mrp: 145, purchasePrice: 116, sellingPrice: 135, gstRate: 5, stock: 55, minStock: 15, hsn: "0902" },
-            { name: "Nescafe Classic 50g", category: "Beverages", sku: "COFFEE001", unit: "GM", mrp: 165, purchasePrice: 132, sellingPrice: 152, gstRate: 5, stock: 40, minStock: 10, hsn: "0901" },
-            { name: "Bru Instant Coffee 100g", category: "Beverages", sku: "COFFEE002", unit: "GM", mrp: 285, purchasePrice: 228, sellingPrice: 265, gstRate: 5, stock: 30, minStock: 8, hsn: "0901" },
-            { name: "Coca-Cola 750ml", category: "Beverages", sku: "COLDDRINK001", unit: "ML", mrp: 40, purchasePrice: 32, sellingPrice: 37, gstRate: 28, stock: 100, minStock: 25, hsn: "2202" },
-            { name: "Sprite 750ml", category: "Beverages", sku: "COLDDRINK002", unit: "ML", mrp: 40, purchasePrice: 32, sellingPrice: 37, gstRate: 28, stock: 95, minStock: 25, hsn: "2202" },
-            { name: "Thums Up 750ml", category: "Beverages", sku: "COLDDRINK003", unit: "ML", mrp: 40, purchasePrice: 32, sellingPrice: 37, gstRate: 28, stock: 90, minStock: 22, hsn: "2202" },
-            { name: "Tropicana Orange 1L", category: "Beverages", sku: "JUICE001", unit: "LTR", mrp: 110, purchasePrice: 88, sellingPrice: 102, gstRate: 12, stock: 45, minStock: 12, hsn: "2009" },
-            { name: "Real Fruit Power Mango 1L", category: "Beverages", sku: "JUICE002", unit: "LTR", mrp: 105, purchasePrice: 84, sellingPrice: 98, gstRate: 12, stock: 40, minStock: 10, hsn: "2009" },
-            
-            // PERSONAL CARE
-            { name: "Dove Cream Beauty Bar 100g", category: "Personal Care", sku: "SOAP001", unit: "GM", mrp: 55, purchasePrice: 44, sellingPrice: 51, gstRate: 18, stock: 100, minStock: 25, hsn: "3401" },
-            { name: "Santoor Sandal Soap 150g", category: "Personal Care", sku: "SOAP002", unit: "GM", mrp: 48, purchasePrice: 38, sellingPrice: 44, gstRate: 18, stock: 120, minStock: 30, hsn: "3401" },
-            { name: "Dove Shampoo 340ml", category: "Personal Care", sku: "SHAMPOO001", unit: "ML", mrp: 285, purchasePrice: 228, sellingPrice: 265, gstRate: 18, stock: 35, minStock: 10, hsn: "3305" },
-            { name: "Clinic Plus Shampoo 340ml", category: "Personal Care", sku: "SHAMPOO002", unit: "ML", mrp: 185, purchasePrice: 148, sellingPrice: 172, gstRate: 18, stock: 40, minStock: 12, hsn: "3305" },
-            { name: "Colgate Strong Teeth 200g", category: "Personal Care", sku: "PASTE001", unit: "GM", mrp: 115, purchasePrice: 92, sellingPrice: 108, gstRate: 18, stock: 60, minStock: 15, hsn: "3306" },
-            { name: "Patanjali Dant Kanti 200g", category: "Personal Care", sku: "PASTE002", unit: "GM", mrp: 95, purchasePrice: 76, sellingPrice: 88, gstRate: 18, stock: 50, minStock: 12, hsn: "3306" },
-            { name: "Lifebuoy Handwash 190ml", category: "Personal Care", sku: "HANDWASH001", unit: "ML", mrp: 85, purchasePrice: 68, sellingPrice: 78, gstRate: 18, stock: 45, minStock: 12, hsn: "3401" },
-            { name: "Dettol Liquid 500ml", category: "Personal Care", sku: "DETTOL001", unit: "ML", mrp: 195, purchasePrice: 156, sellingPrice: 182, gstRate: 18, stock: 35, minStock: 10, hsn: "3808" },
-            
-            // HOUSEHOLD
-            { name: "Surf Excel Matic Top Load 2kg", category: "Household", sku: "DETERGENT001", unit: "KG", mrp: 450, purchasePrice: 360, sellingPrice: 415, gstRate: 18, stock: 40, minStock: 10, hsn: "3402" },
-            { name: "Ariel Matic 2kg", category: "Household", sku: "DETERGENT002", unit: "KG", mrp: 475, purchasePrice: 380, sellingPrice: 438, gstRate: 18, stock: 35, minStock: 8, hsn: "3402" },
-            { name: "Tide Plus 2kg", category: "Household", sku: "DETERGENT003", unit: "KG", mrp: 395, purchasePrice: 316, sellingPrice: 365, gstRate: 18, stock: 45, minStock: 12, hsn: "3402" },
-            { name: "Rin Bar 250g", category: "Household", sku: "DETERGENT004", unit: "GM", mrp: 25, purchasePrice: 19, sellingPrice: 22, gstRate: 18, stock: 150, minStock: 40, hsn: "3401" },
-            { name: "Vim Dishwash Bar 200g", category: "Household", sku: "DISH001", unit: "GM", mrp: 20, purchasePrice: 15, sellingPrice: 18, gstRate: 18, stock: 180, minStock: 45, hsn: "3405" },
-            { name: "Vim Liquid 500ml", category: "Household", sku: "DISH002", unit: "ML", mrp: 115, purchasePrice: 92, sellingPrice: 108, gstRate: 18, stock: 50, minStock: 15, hsn: "3405" },
-            { name: "Harpic Power Plus 500ml", category: "Household", sku: "TOILET001", unit: "ML", mrp: 95, purchasePrice: 76, sellingPrice: 88, gstRate: 18, stock: 45, minStock: 12, hsn: "3808" },
-            { name: "Lizol Disinfectant 500ml", category: "Household", sku: "FLOOR001", unit: "ML", mrp: 115, purchasePrice: 92, sellingPrice: 108, gstRate: 18, stock: 40, minStock: 10, hsn: "3808" },
-            { name: "Good Knight Fast Card 10pcs", category: "Household", sku: "MOSQUITO001", unit: "PCS", mrp: 35, purchasePrice: 27, sellingPrice: 32, gstRate: 18, stock: 80, minStock: 20, hsn: "3808" },
-            
-            // BABY CARE
-            { name: "Pampers Baby Dry Pants M 56pcs", category: "Baby Care", sku: "DIAPER001", unit: "PCS", mrp: 850, purchasePrice: 680, sellingPrice: 785, gstRate: 12, stock: 30, minStock: 8, hsn: "9619" },
-            { name: "Huggies Wonder Pants L 48pcs", category: "Baby Care", sku: "DIAPER002", unit: "PCS", mrp: 925, purchasePrice: 740, sellingPrice: 855, gstRate: 12, stock: 25, minStock: 6, hsn: "9619" },
-            { name: "Johnson's Baby Powder 200g", category: "Baby Care", sku: "BABYPOWDER001", unit: "GM", mrp: 135, purchasePrice: 108, sellingPrice: 125, gstRate: 18, stock: 40, minStock: 10, hsn: "3304" },
-            { name: "Johnson's Baby Soap 100g", category: "Baby Care", sku: "BABYSOAP001", unit: "GM", mrp: 75, purchasePrice: 60, sellingPrice: 69, gstRate: 18, stock: 50, minStock: 12, hsn: "3401" },
-            { name: "Cerelac Stage 1 Rice 300g", category: "Baby Care", sku: "CERELAC001", unit: "GM", mrp: 185, purchasePrice: 148, sellingPrice: 172, gstRate: 5, stock: 35, minStock: 10, hsn: "1901" },
-            
-            // ELECTRONICS
-            { name: "Duracell AA Batteries 4pcs", category: "Electronics", sku: "BATTERY001", unit: "PCS", mrp: 145, purchasePrice: 115, sellingPrice: 132, gstRate: 18, stock: 60, minStock: 15, hsn: "8506" },
-            { name: "Eveready Red AA 4pcs", category: "Electronics", sku: "BATTERY002", unit: "PCS", mrp: 55, purchasePrice: 43, sellingPrice: 50, gstRate: 18, stock: 100, minStock: 25, hsn: "8506" },
-            { name: "Philips LED Bulb 9W", category: "Electronics", sku: "BULB001", unit: "PCS", mrp: 125, purchasePrice: 99, sellingPrice: 115, gstRate: 12, stock: 40, minStock: 10, hsn: "8539" },
-            { name: "Havells LED Bulb 12W", category: "Electronics", sku: "BULB002", unit: "PCS", mrp: 145, purchasePrice: 115, sellingPrice: 132, gstRate: 12, stock: 35, minStock: 8, hsn: "8539" },
-            { name: "Syska Mobile Charger", category: "Electronics", sku: "CHARGER001", unit: "PCS", mrp: 295, purchasePrice: 235, sellingPrice: 272, gstRate: 18, stock: 25, minStock: 6, hsn: "8504" },
-            { name: "SanDisk 32GB Pen Drive", category: "Electronics", sku: "PENDRIVE001", unit: "PCS", mrp: 450, purchasePrice: 360, sellingPrice: 415, gstRate: 18, stock: 20, minStock: 5, hsn: "8523" },
-            
-            // STATIONERY
-            { name: "Classmate Notebook A4 172pgs", category: "Stationery", sku: "NOTEBOOK001", unit: "PCS", mrp: 75, purchasePrice: 59, sellingPrice: 69, gstRate: 12, stock: 60, minStock: 15, hsn: "4820" },
-            { name: "Navneet Notebook A4 140pgs", category: "Stationery", sku: "NOTEBOOK002", unit: "PCS", mrp: 55, purchasePrice: 43, sellingPrice: 50, gstRate: 12, stock: 80, minStock: 20, hsn: "4820" },
-            { name: "Reynolds Trimax Pen Blue", category: "Stationery", sku: "PEN001", unit: "PCS", mrp: 40, purchasePrice: 31, sellingPrice: 36, gstRate: 12, stock: 100, minStock: 25, hsn: "9608" },
-            { name: "Cello Butterflow Pen Blue", category: "Stationery", sku: "PEN002", unit: "PCS", mrp: 20, purchasePrice: 15, sellingPrice: 18, gstRate: 12, stock: 150, minStock: 40, hsn: "9608" },
-            { name: "Faber-Castell Pencils 10pcs", category: "Stationery", sku: "PENCIL001", unit: "PCS", mrp: 65, purchasePrice: 51, sellingPrice: 59, gstRate: 12, stock: 70, minStock: 18, hsn: "9609" },
-            { name: "Apsara Platinum Pencils 10pcs", category: "Stationery", sku: "PENCIL002", unit: "PCS", mrp: 55, purchasePrice: 43, sellingPrice: 50, gstRate: 12, stock: 80, minStock: 20, hsn: "9609" },
+            { name: "Tata Tea Gold 250g", category: "Beverages", brand: "Tata", sku: "TEA001", unit: "GM", mrp: 165, purchasePrice: 132, sellingPrice: 152, gstRate: 5, stock: 50, minStock: 12, hsn: "0902" },
+            { name: "Coca-Cola 750ml", category: "Beverages", brand: "Coca Cola", sku: "COLDDRINK001", unit: "ML", mrp: 40, purchasePrice: 32, sellingPrice: 37, gstRate: 28, stock: 100, minStock: 25, hsn: "2202" },
         ];
 
         // Insert products
@@ -302,9 +270,10 @@ async function seed() {
                 organizationId,
                 storeId,
                 name: product.name,
-                category: product.category,
+                categoryId: categoryMap.get(product.category),
+                brandId: brandMap.get(product.brand),
                 sku: product.sku,
-                unit: product.unit,
+                unitId: unitMap.get(product.unit),
                 mrp: product.mrp.toString(),
                 purchasePrice: product.purchasePrice.toString(),
                 sellingPrice: product.sellingPrice.toString(),
@@ -321,20 +290,13 @@ async function seed() {
         console.log(`✅ Created ${productCount} Indian products\n`);
 
         // ============================================
-        // 9. CREATE SAMPLE CUSTOMERS
+        // 10. CREATE SAMPLE CUSTOMERS
         // ============================================
         console.log("👥 Creating customers...");
         const customersData = [
             { name: "Walk-in Customer", phone: "0000000000", email: "", loyaltyPoints: 0 },
             { name: "Rajesh Kumar", phone: "+91 98765 12345", email: "rajesh@example.com", loyaltyPoints: 150 },
             { name: "Priya Sharma", phone: "+91 98765 23456", email: "priya@example.com", loyaltyPoints: 320 },
-            { name: "Suresh Patel", phone: "+91 98765 34567", email: "suresh@example.com", loyaltyPoints: 85 },
-            { name: "Anita Reddy", phone: "+91 98765 45678", email: "anita@example.com", loyaltyPoints: 275 },
-            { name: "Vikram Singh", phone: "+91 98765 56789", email: "vikram@example.com", loyaltyPoints: 190 },
-            { name: "Meera Iyer", phone: "+91 98765 67890", email: "meera@example.com", loyaltyPoints: 420 },
-            { name: "Arun Nair", phone: "+91 98765 78901", email: "arun@example.com", loyaltyPoints: 65 },
-            { name: "Deepa Joshi", phone: "+91 98765 89012", email: "deepa@example.com", loyaltyPoints: 230 },
-            { name: "Kiran Shah", phone: "+91 98765 90123", email: "kiran@example.com", loyaltyPoints: 175 },
         ];
 
         for (const customer of customersData) {
@@ -347,29 +309,7 @@ async function seed() {
         }
         console.log(`✅ Created ${customersData.length} customers\n`);
 
-        // ============================================
-        // SUMMARY
-        // ============================================
-        console.log("=" .repeat(60));
         console.log("🎉 DATABASE SEEDING COMPLETED SUCCESSFULLY!");
-        console.log("=" .repeat(60));
-        console.log("\n📊 Summary:");
-        console.log(`   • Organization: SuperMart India`);
-        console.log(`   • Store: Main Branch - Bangalore`);
-        console.log(`   • Categories: ${categoriesData.length}`);
-        console.log(`   • Units: ${unitsData.length}`);
-        console.log(`   • Suppliers: ${suppliersData.length}`);
-        console.log(`   • Products: ${productCount}`);
-        console.log(`   • Customers: ${customersData.length}`);
-        console.log("\n🔑 Login Credentials:");
-        console.log(`   Email: admin@supermart.in`);
-        console.log(`   Password: admin123`);
-        console.log(`   Role: Administrator`);
-        console.log("\n💰 Currency: Indian Rupee (₹)");
-        console.log("🧾 GST Enabled: Yes (5%, 12%, 18%, 28%)");
-        console.log("🏷️  HSN Codes: Included for all products");
-        console.log("\n" + "=".repeat(60) + "\n");
-
     } catch (error) {
         console.error("\n❌ Error seeding database:", error);
         throw error;

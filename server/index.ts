@@ -79,7 +79,7 @@ const startPromise = (async () => {
   // setting up all the other routes so the catch-all route
   // doesn't interfere with the other routes
   // On Vercel, static files are handled by vercel.json rewrites, not this server.
-  if (process.env.NODE_ENV === "production" && !process.env.VERCEL) {
+  if (process.env.NODE_ENV === "production") {
     serveStatic(app);
   } else if (process.env.NODE_ENV !== "production") {
     const { setupVite } = await import("./vite");

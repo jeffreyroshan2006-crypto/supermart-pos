@@ -46,7 +46,7 @@ export function setupAuth(app: any) {
         const [user] = await db
           .select()
           .from(users)
-          .where(eq(users.username, username))
+          .where(eq(users.email, username))
           .limit(1);
 
         if (!user) {
