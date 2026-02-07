@@ -30,7 +30,7 @@ export default function InventoryPage() {
       stockQuantity: Number(formData.get("stockQuantity")),
       purchasePrice: formData.get("purchasePrice") as string,
       sellingPrice: formData.get("sellingPrice") as string,
-      taxRate: formData.get("taxRate") as string || "0",
+      gstRate: formData.get("gstRate") as string || "0",
     };
 
     createProduct.mutate(data, {
@@ -161,8 +161,8 @@ export default function InventoryPage() {
                 <Input id="sellingPrice" name="sellingPrice" type="number" step="0.01" required />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="taxRate">Tax Rate (%)</Label>
-                <Input id="taxRate" name="taxRate" type="number" step="0.01" defaultValue="0" />
+                <Label htmlFor="gstRate">GST Rate (%)</Label>
+                <Input id="gstRate" name="gstRate" type="number" step="0.01" defaultValue="0" />
               </div>
             </div>
             <DialogFooter>

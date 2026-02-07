@@ -12,7 +12,7 @@ import { Loader2, CreditCard, Banknote, Smartphone, Wallet, CheckCircle2, Messag
 interface CheckoutModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (paymentMode: typeof paymentModes[number], discount: number) => void;
+  onConfirm: (paymentMode: typeof paymentModes[number], billDiscountAmount: number) => void;
   totalAmount: number;
   isProcessing: boolean;
   lastCreatedBill?: Bill;
@@ -20,12 +20,12 @@ interface CheckoutModalProps {
 
 export function CheckoutModal({ isOpen, onClose, onConfirm, totalAmount, isProcessing, lastCreatedBill }: CheckoutModalProps) {
   const [paymentMode, setPaymentMode] = useState<typeof paymentModes[number]>("cash");
-  const [discount, setDiscount] = useState<number>(0);
+  const [billDiscountAmount, setBillDiscountAmount] = useState<number>(0);
 
-  const finalTotal = Math.max(0, totalAmount - discount);
+  const finalTotal = Math.max(0, totalAmount - billDiscountAmount);
 
   const handleConfirm = () => {
-    onConfirm(paymentMode, discount);
+    onConfirm(paymentMode, billDiscountAmount);
   };
 
   const getIcon = (mode: string) => {
@@ -124,14 +124,14 @@ export function CheckoutModal({ isOpen, onClose, onConfirm, totalAmount, isProce
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Discount Amount (₹)</Label>
               <Input
                 type="number"
                 min="0"
-                value={discount}
-                onChange={(e) => setDiscount(Number(e.target.value))}
+                value={billDiscountAmount}
+                onChange={(e) => setBillDiscountAmount(Number(e.target.value))}
                 className="font-mono"
               />
             </div>

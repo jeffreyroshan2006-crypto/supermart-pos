@@ -142,7 +142,7 @@ export const api = {
           productId: z.number(),
           quantity: z.number().min(1),
         })).min(1),
-        discountAmount: z.number().optional(),
+        billDiscountAmount: z.number().optional(),
       }),
       responses: {
         201: z.custom<typeof bills.$inferSelect>(),

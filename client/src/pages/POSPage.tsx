@@ -74,15 +74,16 @@ export default function POSPage() {
 
   // Totals
   const subtotal = cart.reduce((acc, item) => acc + (Number(item.product.sellingPrice) * item.quantity), 0);
-const tax = cart.reduce((acc, item) => acc + (Number(item.product.sellingPrice) * item.quantity * (Number(item.product.taxRate) / 100)), 0);  const total = subtotal + tax;
+  const tax = cart.reduce((acc, item) => acc + (Number(item.product.sellingPrice) * item.quantity * (Number(item.product.gstRate) / 100)), 0);
+  const total = subtotal + tax;
 
   // Checkout Handler
-  const handleCheckout = (paymentMode: any, discount: number) => {
+  const handleCheckout = (paymentMode: any, billDiscountAmount: number) => {
     createBill.mutate({
       paymentMode,
       customerId: selectedCustomerId === "walk-in" ? undefined : Number(selectedCustomerId),
       items: cart.map(item => ({ productId: item.product.id, quantity: item.quantity })),
-      discountAmount: discount
+      billDiscountAmount
     }, {
       onSuccess: (bill) => {
         toast({ title: "Success", description: "Bill created successfully" });
@@ -265,7 +266,7 @@ const tax = cart.reduce((acc, item) => acc + (Number(item.product.sellingPrice) 
               <span>₹{subtotal.toFixed(2)}</span>
             </div>
             <div className="flex justify-between text-muted-foreground">
-              <span>Tax (10%)</span>
+              <span>Tax (GST)</span>
               <span>₹{tax.toFixed(2)}</span>
             </div>
             <Separator className="my-2" />

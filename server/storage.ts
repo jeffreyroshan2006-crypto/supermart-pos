@@ -125,9 +125,9 @@ export class DatabaseStorage implements IStorage {
         }
 
         const price = Number(product.sellingPrice);
-        const taxRate = Number(product.taxRate);
+        const gstRate = Number(product.gstRate);
         const lineTotal = price * item.quantity;
-        const lineTax = (lineTotal * taxRate) / 100;
+        const lineTax = (lineTotal * gstRate) / 100;
 
         subtotal += lineTotal;
         taxTotal += lineTax;
@@ -145,8 +145,8 @@ export class DatabaseStorage implements IStorage {
         });
       }
 
-      const discountAmount = data.discountAmount || 0;
-      const grandTotal = subtotal + taxTotal - discountAmount;
+      const billDiscountAmount = data.billDiscountAmount || 0;
+      const grandTotal = subtotal + taxTotal - billDiscountAmount;
       const billNumber = `INV-${Date.now()}`;
 
       // 2. Create Bill
@@ -154,7 +154,7 @@ export class DatabaseStorage implements IStorage {
         billNumber,
         subtotal: subtotal.toString(),
         taxTotal: taxTotal.toString(),
-        discountTotal: discountAmount.toString(),
+        discountTotal: billDiscountAmount.toString(),
         grandTotal: grandTotal.toString(),
         paymentMode: data.paymentMode,
         customerId: data.customerId,
