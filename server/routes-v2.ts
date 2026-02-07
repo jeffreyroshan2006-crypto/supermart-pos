@@ -1,13 +1,13 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { storage } from "./storage";
+import * as storage from "./storage-v2";
 import { db } from "./db";
 import { setupAuth, hashPassword } from "./auth";
 import { z } from "zod";
-import { 
-  insertOrganizationSchema, 
-  insertStoreSchema, 
-  insertProductSchema, 
+import {
+  insertOrganizationSchema,
+  insertStoreSchema,
+  insertProductSchema,
   insertCustomerSchema,
   insertBillSchema,
   insertBillItemSchema,
@@ -42,11 +42,11 @@ const requireRole = (roles: string[]) => (req: any, res: any, next: any) => {
 };
 
 export async function registerRoutesV2(app: Express): Promise<void> {
-  
+
   // ============================================
   // AUTH ROUTES
   // ============================================
-  
+
   app.post("/api/auth/login", async (req, res) => {
     // Handled by passport in setupAuth
     res.json({ message: "Use /api/login" });
@@ -94,7 +94,7 @@ export async function registerRoutesV2(app: Express): Promise<void> {
   // ============================================
   // ORGANIZATION ROUTES
   // ============================================
-  
+
   app.post("/api/organizations", async (req, res) => {
     try {
       const data = insertOrganizationSchema.parse(req.body);
@@ -111,7 +111,7 @@ export async function registerRoutesV2(app: Express): Promise<void> {
   // ============================================
   // STORE ROUTES
   // ============================================
-  
+
   app.get("/api/stores", requireAuth, async (req, res) => {
     try {
       const stores = await storage.getStoresByOrganization(req.user.organizationId);
@@ -150,7 +150,7 @@ export async function registerRoutesV2(app: Express): Promise<void> {
   // ============================================
   // USER MANAGEMENT ROUTES
   // ============================================
-  
+
   app.get("/api/users", requireRole(["admin", "manager"]), async (req, res) => {
     try {
       const users = await storage.getUsersByOrganization(req.user.organizationId);
@@ -181,7 +181,7 @@ export async function registerRoutesV2(app: Express): Promise<void> {
   // ============================================
   // CATEGORY ROUTES
   // ============================================
-  
+
   app.get("/api/categories", requireAuth, async (req, res) => {
     try {
       const categories = await storage.getCategoriesByOrganization(req.user.organizationId);
@@ -210,7 +210,7 @@ export async function registerRoutesV2(app: Express): Promise<void> {
   // ============================================
   // BRAND ROUTES
   // ============================================
-  
+
   app.get("/api/brands", requireAuth, async (req, res) => {
     try {
       const brands = await storage.getBrandsByOrganization(req.user.organizationId);
@@ -239,7 +239,7 @@ export async function registerRoutesV2(app: Express): Promise<void> {
   // ============================================
   // UNIT ROUTES
   // ============================================
-  
+
   app.get("/api/units", requireAuth, async (req, res) => {
     try {
       const units = await storage.getUnitsByOrganization(req.user.organizationId);
@@ -252,7 +252,7 @@ export async function registerRoutesV2(app: Express): Promise<void> {
   // ============================================
   // SUPPLIER ROUTES
   // ============================================
-  
+
   app.get("/api/suppliers", requireAuth, async (req, res) => {
     try {
       const suppliers = await storage.getSuppliersByOrganization(req.user.organizationId);
@@ -281,7 +281,7 @@ export async function registerRoutesV2(app: Express): Promise<void> {
   // ============================================
   // PRODUCT ROUTES
   // ============================================
-  
+
   app.get("/api/products", requireAuth, async (req, res) => {
     try {
       const storeId = req.query.storeId || req.user.defaultStoreId;
@@ -302,7 +302,7 @@ export async function registerRoutesV2(app: Express): Promise<void> {
       const query = req.query.q as string;
       const barcode = req.query.barcode as string;
       const storeId = req.query.storeId || req.user.defaultStoreId;
-      
+
       let products;
       if (barcode) {
         products = await storage.searchProductByBarcode(barcode, Number(storeId));
@@ -363,7 +363,7 @@ export async function registerRoutesV2(app: Express): Promise<void> {
   // ============================================
   // CUSTOMER ROUTES
   // ============================================
-  
+
   app.get("/api/customers", requireAuth, async (req, res) => {
     try {
       const customers = await storage.getCustomersByOrganization(req.user.organizationId, {
@@ -425,7 +425,7 @@ export async function registerRoutesV2(app: Express): Promise<void> {
   // ============================================
   // BILL ROUTES
   // ============================================
-  
+
   app.get("/api/bills", requireAuth, async (req, res) => {
     try {
       const bills = await storage.getBillsByOrganization(req.user.organizationId, {
@@ -456,14 +456,14 @@ export async function registerRoutesV2(app: Express): Promise<void> {
     try {
       const data: CreateBillRequest = req.body;
       const storeId = req.user.defaultStoreId;
-      
+
       const bill = await storage.createBill({
         ...data,
         organizationId: req.user.organizationId,
         storeId,
         cashierId: req.user.id,
       });
-      
+
       res.status(201).json(bill);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
@@ -483,7 +483,7 @@ export async function registerRoutesV2(app: Express): Promise<void> {
   // ============================================
   // HELD BILL ROUTES
   // ============================================
-  
+
   app.get("/api/bills/held", requireAuth, async (req, res) => {
     try {
       const storeId = req.query.storeId || req.user.defaultStoreId;
@@ -530,7 +530,7 @@ export async function registerRoutesV2(app: Express): Promise<void> {
   // ============================================
   // PURCHASE ORDER ROUTES
   // ============================================
-  
+
   app.get("/api/purchase-orders", requireAuth, async (req, res) => {
     try {
       const orders = await storage.getPurchaseOrdersByStore(req.user.defaultStoreId);
@@ -571,7 +571,7 @@ export async function registerRoutesV2(app: Express): Promise<void> {
   // ============================================
   // STOCK ADJUSTMENT ROUTES
   // ============================================
-  
+
   app.get("/api/stock-adjustments", requireAuth, async (req, res) => {
     try {
       const adjustments = await storage.getStockAdjustmentsByStore(req.user.defaultStoreId);
@@ -602,7 +602,7 @@ export async function registerRoutesV2(app: Express): Promise<void> {
   // ============================================
   // REPORTS ROUTES
   // ============================================
-  
+
   app.get("/api/reports/sales-summary", requireAuth, async (req, res) => {
     try {
       const { startDate, endDate, storeId } = req.query;
@@ -656,7 +656,7 @@ export async function registerRoutesV2(app: Express): Promise<void> {
   // ============================================
   // SETTINGS ROUTES
   // ============================================
-  
+
   app.get("/api/settings", requireAuth, async (req, res) => {
     try {
       const settings = await storage.getStoreSettings(req.user.defaultStoreId);
@@ -678,7 +678,7 @@ export async function registerRoutesV2(app: Express): Promise<void> {
   // ============================================
   // PUBLIC ROUTES
   // ============================================
-  
+
   app.get("/api/public/bills/:publicId", async (req, res) => {
     try {
       const bill = await storage.getBillByPublicId(req.params.publicId);
