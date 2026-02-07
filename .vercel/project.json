@@ -1,11 +1,16 @@
 {
-  "projectId": "your-vercel-project-id",
-  "orgId": "your-vercel-org-id",
+  "projectId": "prj_6F81d8KzLF2Yeesn01UjEy2hsk7L",
+  "orgId": "team_oiCPcD0SECOy6rzybkKTkVWt",
+  "projectName": "supermart-pos",
   "settings": {
-    "framework": null,
-    "buildCommand": "npm run build",
-    "outputDirectory": "dist",
+    "createdAt": 1770387626244,
+    "framework": "vite",
+    "devCommand": null,
     "installCommand": "npm install",
-    "devCommand": "npm run dev"
+    "buildCommand": "vite build",
+    "outputDirectory": "dist/public",
+    "rootDirectory": null,
+    "directoryListing": false,
+    "nodeVersion": "24.x"
   }
 }
